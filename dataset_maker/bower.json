@@ -1,0 +1,13 @@
+{
+  "name": "dataset_maker",
+  "homepage": "https://github.com/Ugnelis/ktu-robots-intellect",
+  "authors": [
+    "Ugnius Malūkas <ugnius.malukas@gmail.com>"
+  ],
+  "description": "Dataset Maker is for making dataset by separating rouds, paths in images for ktu-robots-intellect project.",
+  "main": "",
+  "private": true,
+  "dependencies": {
+    "fabric.js": "fabric#^1.6.6"
+  }
+}

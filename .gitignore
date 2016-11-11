@@ -87,3 +87,8 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+
+# bower and npm:
+bower_components/
+node_modules/
