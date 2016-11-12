@@ -38,6 +38,8 @@
         });
         c.hasControls = c.hasBorders = false;
 
+        c.originX = c.originY = 'center';
+
         c.point = point;
         return c;
     }
