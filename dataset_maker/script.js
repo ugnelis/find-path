@@ -6,6 +6,7 @@
     var polygonEnded = false;
     var polygonCreated = false;
 
+    var polygon;
     var lines = [];
 
     var canvas = this.__canvas = new fabric.Canvas('canvas', {selection: false});
@@ -86,9 +87,6 @@
         }
     }
 
-    var polygon = makePolygon(points);
-    canvas.add(polygon);
-
     //var lines = generateLines(points);
     var circles = generateCircles(points);
 
@@ -97,9 +95,8 @@
 
 
     function addPolygon() {
-        var polygon = makePolygon(points);
+        polygon = makePolygon(points);
         canvas.sendToBack(polygon);
-        canvas.renderAll();
     }
 
     function addLine(last) {
@@ -171,7 +168,7 @@
             // Add line
             addLine(true);
 
-            var polygon = makePolygon(points);
+            polygon = makePolygon(points);
             canvas.sendToBack(polygon);
 
             polygonCreated = true;
@@ -186,12 +183,20 @@
         if (firstCircle == event.target) {
             event.target.setFill('red');
         }
+
+        if (polygon == event.target) {
+            event.target.setFill('rgba(128, 0, 128, 1)');
+        }
         canvas.renderAll();
     });
 
     canvas.on('mouse:out', function (event) {
         if (firstCircle == event.target) {
             event.target.setFill('green');
+        }
+
+        if (polygon == event.target) {
+            event.target.setFill('rgba(128, 0, 128, 0.5)');
         }
         canvas.renderAll();
     });
