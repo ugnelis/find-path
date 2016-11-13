@@ -1,22 +1,17 @@
 (function (window) {
 
-    // var points = [
-    //     {x: 250, y: 125},
-    //     {x: 175, y: 225},
-    //     {x: 200, y: 350},
-    //     {x: 300, y: 350},
-    //     {x: 325, y: 225}
-    // ];
-
     var points = [];
     var firstCircle;
 
-    var ended = false;
+    var polygonEnded = false;
+    var polygonCreated = false;
+
+    var lines = [];
 
     var canvas = this.__canvas = new fabric.Canvas('canvas', {selection: false});
 
     function makeCircle(point) {
-        var c = new fabric.Circle({
+        var circle = new fabric.Circle({
             left: point.x,
             top: point.y,
             strokeWidth: 5,
@@ -24,12 +19,14 @@
             fill: '#fff',
             stroke: '#666'
         });
-        c.hasControls = c.hasBorders = false;
+        circle.hasControls = false;
+        circle.hasBorders = false;
 
-        c.originX = c.originY = 'center';
+        circle.originX = 'center';
+        circle.originY = 'center';
 
-        c.point = point;
-        return c;
+        circle.point = point;
+        return circle;
     }
 
     function makeLine(coords) {
@@ -105,6 +102,37 @@
         canvas.renderAll();
     }
 
+    function addLine(last) {
+        if (points.length > 1) {
+            var line;
+
+            if (last) {
+                line = makeLine([
+                    points[points.length - 1].x,
+                    points[points.length - 1].y,
+                    points[0].x,
+                    points[0].y
+                ]);
+            } else {
+                line = makeLine([
+                    points[points.length - 2].x,
+                    points[points.length - 2].y,
+                    points[points.length - 1].x,
+                    points[points.length - 1].y,
+                ]);
+            }
+            lines.push(line);
+            canvas.sendToBack(line);
+        }
+    }
+
+    function removeLines() {
+        for (var i = 0; i < lines.length; i++) {
+            canvas.remove(lines[i]);
+        }
+    }
+
+
     canvas.on('object:moving', function (event) {
         var target = event.target;
         target.point.x = target.left;
@@ -115,10 +143,10 @@
     canvas.on('mouse:up', function (event) {
         // if clicked first circle;
         if (firstCircle == event.target && firstCircle != null) {
-            ended = true;
+            polygonEnded = true;
         }
 
-        if (!ended) {
+        if (!polygonEnded) {
             // Get mouse pointer
             var pointer = canvas.getPointer(event.e);
             var x = pointer.x;
@@ -126,15 +154,7 @@
             points.push({x: x, y: y});
 
             // Add line
-            if (points.length > 1) {
-                var line = makeLine([
-                    points[points.length - 2].x,
-                    points[points.length - 2].y,
-                    points[points.length - 1].x,
-                    points[points.length - 1].y]
-                );
-                canvas.sendToBack(line);
-            }
+            addLine();
 
             // Add circle
             if (points.length == 1) {
@@ -145,20 +165,18 @@
                 var circle = makeCircle(points[points.length - 1]);
                 canvas.add(circle);
             }
-        } else {
+        }
+
+        if (polygonEnded && !polygonCreated) {
             // Add line
-            if (points.length > 1) {
-                var line = makeLine([
-                    points[points.length - 1].x,
-                    points[points.length - 1].y,
-                    points[0].x,
-                    points[0].y
-                ]);
-                canvas.sendToBack(line);
-            }
+            addLine(true);
 
             var polygon = makePolygon(points);
             canvas.sendToBack(polygon);
+
+            polygonCreated = true;
+
+            removeLines();
         }
 
         canvas.renderAll();
@@ -178,7 +196,12 @@
         canvas.renderAll();
     });
 
-    window.addPolygon = addPolygon;
+    function test() {
+        console.log("It works");
+    }
+
+    window.addPolygon = test;
+
 
 })
 (window);
