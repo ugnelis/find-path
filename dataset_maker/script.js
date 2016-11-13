@@ -9,6 +9,9 @@
     // ];
 
     var points = [];
+    var firstCircle;
+
+    var ended = false;
 
     var canvas = this.__canvas = new fabric.Canvas('canvas', {selection: false});
 
@@ -103,23 +106,75 @@
     }
 
     canvas.on('object:moving', function (event) {
-        var p = event.target;
-        p.point.x = p.left;
-        p.point.y = p.top;
+        var target = event.target;
+        target.point.x = target.left;
+        target.point.y = target.top;
         canvas.renderAll();
     });
 
     canvas.on('mouse:up', function (event) {
-        // TODO remove if
-        if (points.length < 10) {
+        // if clicked first circle;
+        if (firstCircle == event.target && firstCircle != null) {
+            ended = true;
+        }
+
+        if (!ended) {
+            // Get mouse pointer
             var pointer = canvas.getPointer(event.e);
             var x = pointer.x;
             var y = pointer.y;
             points.push({x: x, y: y});
-            var circle = makeCircle(points[points.length - 1]);
-            canvas.add(circle);
+
+            // Add line
+            if (points.length > 1) {
+                var line = makeLine([
+                    points[points.length - 2].x,
+                    points[points.length - 2].y,
+                    points[points.length - 1].x,
+                    points[points.length - 1].y]
+                );
+                canvas.sendToBack(line);
+            }
+
+            // Add circle
+            if (points.length == 1) {
+                firstCircle = makeCircle(points[points.length - 1]);
+                firstCircle.setFill('green');
+                canvas.add(firstCircle);
+            } else {
+                var circle = makeCircle(points[points.length - 1]);
+                canvas.add(circle);
+            }
+        } else {
+            // Add line
+            if (points.length > 1) {
+                var line = makeLine([
+                    points[points.length - 1].x,
+                    points[points.length - 1].y,
+                    points[0].x,
+                    points[0].y
+                ]);
+                canvas.sendToBack(line);
+            }
+
+            var polygon = makePolygon(points);
+            canvas.sendToBack(polygon);
         }
 
+        canvas.renderAll();
+    });
+
+    canvas.on('mouse:over', function (event) {
+        if (firstCircle == event.target) {
+            event.target.setFill('red');
+        }
+        canvas.renderAll();
+    });
+
+    canvas.on('mouse:out', function (event) {
+        if (firstCircle == event.target) {
+            event.target.setFill('green');
+        }
         canvas.renderAll();
     });
 
