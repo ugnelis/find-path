@@ -5,15 +5,15 @@
     var addMode = false;
     var editMode = false;
 
-    function addPolygon() {
+    function newPolygon() {
         if (addMode == false) {
             document.getElementById("add").innerHTML = "Done";
             addMode = true;
         } else if (addMode == true) {
-            document.getElementById("add").innerHTML = "Add Polygon";
+            document.getElementById("add").innerHTML = "New Polygon";
             addMode = false;
         }
-        polygon.newPolygon(addMode);
+        polygon.addMode(addMode);
     }
 
     function saveData() {
@@ -32,7 +32,7 @@
         polygon.editMode(editMode);
     }
 
-    window.addPolygon = addPolygon;
+    window.newPolygon = newPolygon;
     window.saveData = saveData;
     window.editData = editData;
 

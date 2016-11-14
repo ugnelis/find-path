@@ -5,7 +5,7 @@
 <body>
 <canvas id="canvas" width="600" height="600"></canvas>
 <div>
-    <button id="add" onclick="addPolygon()">Add Polygon</button>
+    <button id="add" onclick="newPolygon()">New Polygon</button>
 </div>
 <div>
     <div>Type:</div>
@@ -18,6 +18,9 @@
 </div>
 
 <script src="bower_components/fabric.js/dist/fabric.js"></script>
+<script src="utility.js"></script>
+<script src="modes/add_mode.js"></script>
+<script src="modes/edit_mode.js"></script>
 <script src="polygon.js"></script>
 <script src="script.js"></script>
 </body>
