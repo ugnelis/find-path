@@ -48,7 +48,6 @@ var Polygon = (function () {
                     circles.push(firstCircle);
                     canvas.add(firstCircle);
                 } else {
-
                     var circle = self.makeCircle(points[points.length - 1]);
                     circles.push(circle);
                     canvas.add(circle);
@@ -63,6 +62,8 @@ var Polygon = (function () {
                 canvas.sendToBack(polygon);
 
                 polygonCreated = true;
+
+                self.makeSelectable(circles, true);
 
                 self.removeLines();
             }
@@ -101,7 +102,8 @@ var Polygon = (function () {
             strokeWidth: 5,
             radius: 12,
             fill: '#fff',
-            stroke: '#666'
+            stroke: '#666',
+            selectable: false
         });
         circle.hasControls = false;
         circle.hasBorders = false;
@@ -227,6 +229,16 @@ var Polygon = (function () {
             this.canvas.remove(circles[i]);
         }
         circles = [];
+    };
+
+    Polygon.prototype.makeSelectable = function (object, value) {
+        if (Array.isArray(object)) {
+            for (var i = 0; i < object.length; i++) {
+                object[i].selectable = value;
+            }
+        } else {
+            object.selectable = true;
+        }
     };
 
     return Polygon;
