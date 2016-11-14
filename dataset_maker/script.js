@@ -5,7 +5,7 @@
     var polygon = new Polygon(canvas);
 
     function test() {
-        console.log("It works!");
+        polygon.newPolygon();
     }
 
     window.addPolygon = test;

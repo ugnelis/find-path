@@ -10,6 +10,7 @@ var Polygon = (function () {
 
     var polygon;
     var lines = [];
+    var circles = [];
 
     function Polygon(canvas) {
         this.canvas = canvas;
@@ -25,7 +26,7 @@ var Polygon = (function () {
         });
 
         this.canvas.on('mouse:up', function (event) {
-            // if clicked first circle;
+            // If first circle is clicked
             if (firstCircle == event.target && firstCircle != null) {
                 polygonEnded = true;
             }
@@ -44,10 +45,12 @@ var Polygon = (function () {
                 if (points.length == 1) {
                     firstCircle = self.makeCircle(points[points.length - 1]);
                     firstCircle.setFill('green');
+                    circles.push(firstCircle);
                     canvas.add(firstCircle);
                 } else {
 
                     var circle = self.makeCircle(points[points.length - 1]);
+                    circles.push(circle);
                     canvas.add(circle);
                 }
             }
@@ -167,8 +170,24 @@ var Polygon = (function () {
     };
 
     Polygon.prototype.addPolygon = function () {
-        this.polygon = this.makePolygon(this.points);
-        this.canvas.sendToBack(this.polygon);
+        polygon = this.makePolygon(points);
+        this.canvas.sendToBack(polygon);
+    };
+
+    Polygon.prototype.newPolygon = function () {
+        //polygon = this.makePolygon(points);
+        //this.canvas.sendToBack(polygon);
+        this.canvas.remove(polygon);
+        this.removeCircles();
+
+        // Reset variables.
+        points = [];
+        firstCircle = null;
+
+        polygonEnded = false;
+        polygonCreated = false;
+
+        polygon = null;
     };
 
     Polygon.prototype.addLine = function (last) {
@@ -201,6 +220,13 @@ var Polygon = (function () {
             this.canvas.remove(lines[i]);
         }
         lines = [];
+    };
+
+    Polygon.prototype.removeCircles = function () {
+        for (var i = 0; i < circles.length; i++) {
+            this.canvas.remove(circles[i]);
+        }
+        circles = [];
     };
 
     return Polygon;
