@@ -9,6 +9,8 @@ var Polygon = (function () {
     var polygonCreated = false;
 
     var polygon;
+    var polygons = [];
+
     var lines = [];
     var circles = [];
 
@@ -177,9 +179,9 @@ var Polygon = (function () {
     };
 
     Polygon.prototype.newPolygon = function () {
-        //polygon = this.makePolygon(points);
-        //this.canvas.sendToBack(polygon);
-        this.canvas.remove(polygon);
+        // Add polygon to the list.
+        polygons.push(polygon);
+
         this.removeCircles();
 
         // Reset variables.
@@ -213,7 +215,7 @@ var Polygon = (function () {
             }
             lines.push(line);
 
-            this.canvas.sendToBack(line);
+            this.canvas.sendBackwards(line);
         }
     };
 
