@@ -14,6 +14,8 @@ var Polygon = (function () {
     var lines = [];
     var circles = [];
 
+    var state = '';
+
     function Polygon(canvas) {
         this.canvas = canvas;
 
@@ -80,7 +82,7 @@ var Polygon = (function () {
             }
 
             if (polygon == event.target) {
-                event.target.setFill('rgba(128, 0, 128, 1)');
+                event.target.setFill(self.setPolygonColor(polygon, true));
             }
             canvas.renderAll();
         });
@@ -91,11 +93,25 @@ var Polygon = (function () {
             }
 
             if (polygon == event.target) {
-                event.target.setFill('rgba(128, 0, 128, 0.5)');
+                event.target.setFill(self.setPolygonColor(polygon, false));
             }
             canvas.renderAll();
         });
     }
+
+    Polygon.prototype.setPolygonColor = function (polygon, hover) {
+        if (polygon.type == 'none') {
+            return (hover) ? 'rgba(128, 0, 128, 1)' : 'rgba(128, 0, 128, 0.5)';
+        }
+
+        if (polygon.type == 'good') {
+            return (hover) ? 'rgba(0, 153, 76, 1)' : 'rgba(0, 153, 76, 0.5)';
+        }
+
+        if (polygon.type == 'bad') {
+            return (hover) ? 'rgba(204, 0, 0, 1)' : 'rgba(204, 0, 0, 0.5)';
+        }
+    };
 
     Polygon.prototype.makeCircle = function (point) {
         var circle = new fabric.Circle({
@@ -127,10 +143,14 @@ var Polygon = (function () {
     };
 
     Polygon.prototype.makePolygon = function (coords) {
-        return new fabric.Polygon(coords, {
-            fill: 'rgba(128, 0, 128, 0.5)',
+        var polygon = new fabric.Polygon(coords, {
             selectable: false
         });
+        polygon.type = 'none';
+        //polygon.setFill('rgba(128, 0, 128, 0.5)');
+        polygon.setFill(this.setPolygonColor(polygon));
+
+        return polygon;
     };
 
     Polygon.prototype.generateLines = function (points) {
@@ -176,22 +196,6 @@ var Polygon = (function () {
     Polygon.prototype.addPolygon = function () {
         polygon = this.makePolygon(points);
         this.canvas.sendToBack(polygon);
-    };
-
-    Polygon.prototype.newPolygon = function () {
-        // Add polygon to the list.
-        polygons.push(polygon);
-
-        this.removeCircles();
-
-        // Reset variables.
-        points = [];
-        firstCircle = null;
-
-        polygonEnded = false;
-        polygonCreated = false;
-
-        polygon = null;
     };
 
     Polygon.prototype.addLine = function (last) {
@@ -241,6 +245,75 @@ var Polygon = (function () {
         } else {
             object.selectable = true;
         }
+    };
+
+    Polygon.prototype.refresh = function () {
+        polygon.setFill(this.setPolygonColor(polygon));
+        this.canvas.renderAll();
+    };
+
+    Polygon.prototype.saveData = function (type) {
+        if (type == 'good') {
+            polygon.type = 'good';
+        }
+
+        if (type == 'bad') {
+            polygon.type = 'bad';
+        }
+
+        this.refresh();
+    };
+
+    Polygon.prototype.doBeforeState = function () {
+        if (state == 'add') {
+            // Add polygon to the list.
+            polygons.push(polygon);
+
+            this.removeCircles();
+
+            // Reset variables.
+            points = [];
+            firstCircle = null;
+
+            polygonEnded = false;
+            polygonCreated = false;
+
+            polygon = null;
+        }
+
+        if (state == 'edit') {
+        }
+    };
+
+    Polygon.prototype.doOnState = function () {
+        if (state == 'add') {
+            // Add polygon to the list.
+            polygons.push(polygon);
+
+            this.removeCircles();
+
+            // Reset variables.
+            points = [];
+            firstCircle = null;
+
+            polygonEnded = false;
+            polygonCreated = false;
+
+            polygon = null;
+        }
+
+        if (state == 'edit') {
+        }
+    };
+
+    Polygon.prototype.newPolygon = function (add) {
+        state = (add) ? 'add' : '';
+        this.doOnState();
+    };
+
+    Polygon.prototype.editMode = function (edit) {
+        state = (edit) ? 'edit' : '';
+        this.doOnState();
     };
 
     return Polygon;

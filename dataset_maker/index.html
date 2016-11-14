@@ -4,7 +4,18 @@
 </head>
 <body>
 <canvas id="canvas" width="600" height="600"></canvas>
-<button onclick="addPolygon()">Add Polygon</button>
+<div>
+    <button id="add" onclick="addPolygon()">Add Polygon</button>
+</div>
+<div>
+    <div>Type:</div>
+    <input type="radio" name="type" value="good" checked> Good
+    <input type="radio" name="type" value="bad"> Bad
+    <button onclick="saveData()">Save</button>
+</div>
+<div>
+    <button id="edit" onclick="editData()">Edit</button>
+</div>
 
 <script src="bower_components/fabric.js/dist/fabric.js"></script>
 <script src="polygon.js"></script>
