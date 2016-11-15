@@ -7,7 +7,7 @@
 
     var addButton = document.getElementById("add");
     var editButton = document.getElementById("edit");
-    var removeButton = document.getElementById("remove");
+    var myFieldset = document.getElementById("myFieldset");
 
     function newPolygon() {
         if (addMode == false) {
@@ -15,13 +15,13 @@
             addButton.innerHTML = "Done";
 
             editButton.disabled = true;
-            removeButton.disabled = false;
+            myFieldset.disabled = false;
         } else if (addMode == true) {
             addMode = false;
             addButton.innerHTML = "New Polygon";
 
             editButton.disabled = false;
-            removeButton.disabled = true;
+            myFieldset.disabled = true;
         }
         polygon.addMode(addMode);
     }
@@ -37,14 +37,14 @@
             editButton.innerHTML = "Done";
 
             addButton.disabled = true;
-            removeButton.disabled = false;
+            myFieldset.disabled = false;
 
         } else if (editMode == true) {
             editMode = false;
             editButton.innerHTML = "Edit";
 
             addButton.disabled = false;
-            removeButton.disabled = true;
+            myFieldset.disabled = true;
         }
         polygon.editMode(editMode);
     }
@@ -53,7 +53,7 @@
         polygon.removePolygon();
     }
 
-    removeButton.disabled = true;
+    myFieldset.disabled = true;
     window.newPolygon = newPolygon;
     window.saveData = saveData;
     window.editData = editData;

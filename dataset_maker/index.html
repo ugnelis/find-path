@@ -6,19 +6,20 @@
 <canvas id="canvas" width="600" height="600"></canvas>
 <div>
     <button id="add" onclick="newPolygon()">New Polygon</button>
-</div>
-<div>
-    <div>Type:</div>
-    <input type="radio" name="type" value="good" checked> Good
-    <input type="radio" name="type" value="bad"> Bad
-    <button onclick="saveData()">Save</button>
-</div>
-<div>
-    <button id="remove" onclick="removeData()">Remove</button>
-</div>
-<div>
     <button id="edit" onclick="editData()">Edit</button>
 </div>
+<fieldset id="myFieldset">
+    <div>
+        <div>Type:</div>
+        <input type="radio" name="type" value="good" id="good" checked/><label for="good">Good</label><br/>
+        <input type="radio" name="type" value="bad" id="bad"/><label for="bad">Bad</label><br/>
+        <button onclick="saveData()">Save</button>
+        <br/>
+    </div>
+    <div>
+        <button id="remove" onclick="removeData()">Remove</button>
+    </div>
+</fieldset>
 
 <script src="bower_components/fabric.js/dist/fabric.js"></script>
 <script src="scripts/utility.js"></script>
