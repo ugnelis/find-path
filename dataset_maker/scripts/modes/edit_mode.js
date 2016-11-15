@@ -72,5 +72,17 @@ var EditMode = (function () {
         this.canvas.renderAll();
     };
 
+    EditMode.prototype.remove = function () {
+        Utility.remove(this.canvas, selectedPolygon);
+        Utility.remove(this.canvas, circles);
+
+        selectedPolygon = null;
+        isSelected = false;
+
+        circles = [];
+
+        this.canvas.renderAll();
+    };
+
     return EditMode;
 }());

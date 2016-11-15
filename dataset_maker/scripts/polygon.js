@@ -58,5 +58,9 @@ var Polygon = (function () {
         polygons.push(polygon);
     };
 
+    Polygon.prototype.removePolygon = function () {
+        mode.remove();
+    };
+
     return Polygon;
 }());

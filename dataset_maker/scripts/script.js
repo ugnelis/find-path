@@ -5,15 +5,23 @@
     var addMode = false;
     var editMode = false;
 
+    var addButton = document.getElementById("add");
+    var editButton = document.getElementById("edit");
+    var removeButton = document.getElementById("remove");
+
     function newPolygon() {
         if (addMode == false) {
-            document.getElementById("add").innerHTML = "Done";
-            document.getElementById("edit").disabled = true;
             addMode = true;
+            addButton.innerHTML = "Done";
+
+            editButton.disabled = true;
+            removeButton.disabled = false;
         } else if (addMode == true) {
-            document.getElementById("add").innerHTML = "New Polygon";
-            document.getElementById("edit").disabled = false;
             addMode = false;
+            addButton.innerHTML = "New Polygon";
+
+            editButton.disabled = false;
+            removeButton.disabled = true;
         }
         polygon.addMode(addMode);
     }
@@ -25,19 +33,30 @@
 
     function editData() {
         if (editMode == false) {
-            document.getElementById("edit").innerHTML = "Done";
-            document.getElementById("add").disabled = true;
             editMode = true;
+            editButton.innerHTML = "Done";
+
+            addButton.disabled = true;
+            removeButton.disabled = false;
+
         } else if (editMode == true) {
-            document.getElementById("edit").innerHTML = "Edit";
-            document.getElementById("add").disabled = false;
             editMode = false;
+            editButton.innerHTML = "Edit";
+
+            addButton.disabled = false;
+            removeButton.disabled = true;
         }
         polygon.editMode(editMode);
     }
 
+    function removeData() {
+        polygon.removePolygon();
+    }
+
+    removeButton.disabled = true;
     window.newPolygon = newPolygon;
     window.saveData = saveData;
     window.editData = editData;
+    window.removeData = removeData;
 
 })(window);

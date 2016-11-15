@@ -99,9 +99,32 @@ var AddMode = (function () {
 
     AddMode.prototype.doAfter = function () {
         // Add polygon to the list.
-        this.parent.addPolygon(polygon);
+        if (polygon != null) {
+            this.parent.addPolygon(polygon);
+        }
 
+        Utility.remove(this.canvas, lines);
         Utility.remove(this.canvas, circles);
+
+        // Reset variables.
+        points = [];
+        firstCircle = null;
+
+        polygonEnded = false;
+        polygonCreated = false;
+
+        polygon = null;
+
+        lines = [];
+        circles = [];
+
+        this.canvas.renderAll();
+    };
+
+    AddMode.prototype.remove = function () {
+        Utility.remove(this.canvas, lines);
+        Utility.remove(this.canvas, circles);
+        Utility.remove(this.canvas, polygon);
 
         // Reset variables.
         points = [];
