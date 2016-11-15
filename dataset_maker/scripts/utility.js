@@ -55,7 +55,27 @@ var Utility = (function () {
                     object[i].selectable = value;
                 }
             } else {
-                object.selectable = true;
+                object.selectable = value;
+            }
+        },
+        generateCircles: function (points) {
+            console.log(points);
+            var circles = [];
+
+            for (var i = 0; i < points.length; i++) {
+                var circle = Utility.makeCircle(points[i]);
+                circles.push(circle);
+            }
+
+            return circles;
+        },
+        add: function (canvas, object) {
+            if (Array.isArray(object)) {
+                for (var i = 0; i < object.length; i++) {
+                    canvas.add(object[i]);
+                }
+            } else {
+                canvas.add(object);
             }
         },
         remove: function (canvas, object) {

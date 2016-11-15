@@ -111,6 +111,11 @@ var AddMode = (function () {
         polygonCreated = false;
 
         polygon = null;
+
+        lines = [];
+        circles = [];
+
+        this.canvas.renderAll();
     };
 
     AddMode.prototype.addLine = function (last) {
