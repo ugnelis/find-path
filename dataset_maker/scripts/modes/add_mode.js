@@ -76,8 +76,7 @@ var AddMode = (function () {
 
     AddMode.prototype.eventMouseOver = function (event) {
         if (firstCircle == event.target) {
-
-            event.target.setFill('red');
+            event.target.setFill('rgba(0, 0, 204, 0.8)');
         }
 
         if (polygon == event.target) {
@@ -88,7 +87,7 @@ var AddMode = (function () {
 
     AddMode.prototype.eventMouseOut = function (event) {
         if (firstCircle == event.target) {
-            event.target.setFill('green');
+            event.target.setFill('rgba(0, 0, 204, 0.5)');
         }
 
         if (polygon == event.target) {
@@ -170,7 +169,12 @@ var AddMode = (function () {
             }
             lines.push(line);
 
-            this.canvas.sendBackwards(line);
+            this.canvas.add(line);
+
+            // Bring circles to front in canvas.
+            for (var i = 0; i < circles.length; i++) {
+                this.canvas.bringToFront(circles[i]);
+            }
         }
     };
 

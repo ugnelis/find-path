@@ -23,7 +23,7 @@ var Utility = (function () {
             return new fabric.Line(coords, {
                 fill: 'red',
                 stroke: 'red',
-                strokeWidth: 5,
+                strokeWidth: 3,
                 selectable: false
             });
         },

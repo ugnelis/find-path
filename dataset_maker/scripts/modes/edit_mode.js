@@ -87,7 +87,7 @@ var EditMode = (function () {
     EditMode.prototype.set = function (options) {
         if (selectedPolygon != null) {
             selectedPolygon.type = options.type;
-            selectedPolygon.setFill(Utility.setPolygonColor(selectedPolygon, true));
+            selectedPolygon.setFill(Utility.setPolygonColor(selectedPolygon, false));
             this.canvas.renderAll();
         }
     };
