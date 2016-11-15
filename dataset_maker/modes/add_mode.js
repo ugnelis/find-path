@@ -68,7 +68,7 @@ var AddMode = (function () {
 
             Utility.makeSelectable(circles, true);
 
-            this.removeLines();
+            Utility.remove(this.canvas, lines);
         }
 
         this.canvas.renderAll();
@@ -81,7 +81,7 @@ var AddMode = (function () {
         }
 
         if (polygon == event.target) {
-            event.target.setFill(this.setPolygonColor(polygon, true));
+            event.target.setFill(Utility.setPolygonColor(polygon, true));
         }
         this.canvas.renderAll();
     };
@@ -92,7 +92,7 @@ var AddMode = (function () {
         }
 
         if (polygon == event.target) {
-            event.target.setFill(this.setPolygonColor(polygon, false));
+            event.target.setFill(Utility.setPolygonColor(polygon, false));
         }
         this.canvas.renderAll();
     };
@@ -101,7 +101,7 @@ var AddMode = (function () {
         // Add polygon to the list.
         this.parent.addPolygon(polygon);
 
-        this.removeCircles();
+        Utility.remove(this.canvas, circles);
 
         // Reset variables.
         points = [];
@@ -111,20 +111,6 @@ var AddMode = (function () {
         polygonCreated = false;
 
         polygon = null;
-    };
-
-    AddMode.prototype.setPolygonColor = function (polygon, hover) {
-        if (polygon.type == 'none') {
-            return (hover) ? 'rgba(128, 0, 128, 1)' : 'rgba(128, 0, 128, 0.5)';
-        }
-
-        if (polygon.type == 'good') {
-            return (hover) ? 'rgba(0, 153, 76, 1)' : 'rgba(0, 153, 76, 0.5)';
-        }
-
-        if (polygon.type == 'bad') {
-            return (hover) ? 'rgba(204, 0, 0, 1)' : 'rgba(204, 0, 0, 0.5)';
-        }
     };
 
     AddMode.prototype.addLine = function (last) {
@@ -151,28 +137,6 @@ var AddMode = (function () {
             this.canvas.sendBackwards(line);
         }
     };
-
-    AddMode.prototype.removeLines = function () {
-        for (var i = 0; i < lines.length; i++) {
-            this.canvas.remove(lines[i]);
-        }
-        lines = [];
-    };
-
-    AddMode.prototype.removeCircles = function () {
-        for (var i = 0; i < circles.length; i++) {
-            this.canvas.remove(circles[i]);
-        }
-        circles = [];
-    };
-
-    AddMode.prototype.removeCircles = function () {
-        for (var i = 0; i < circles.length; i++) {
-            this.canvas.remove(circles[i]);
-        }
-        circles = [];
-    };
-
 
     return AddMode;
 }());

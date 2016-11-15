@@ -10,7 +10,6 @@ var Polygon = (function () {
 
     function Polygon(canvas) {
         this.canvas = canvas;
-        //mode = new AddMode(this, canvas);
 
         this.canvas.on('object:moving', function (event) {
             mode.eventObjectMoving(event);
@@ -30,7 +29,6 @@ var Polygon = (function () {
     }
 
     Polygon.prototype.addMode = function (add) {
-        state = (add) ? 'add' : '';
         if (add) {
             state = 'add';
             mode = new AddMode(this, this.canvas);
@@ -42,11 +40,18 @@ var Polygon = (function () {
     };
 
     Polygon.prototype.editMode = function (edit) {
-        state = (edit) ? 'edit' : '';
-        for (var i = 0; i < polygons.length; i++) {
-            this.canvas.remove(polygons[i]);
+        if (edit) {
+            state = 'add';
+            mode = new EditMode(this, this.canvas);
+        } else {
+            state = '';
+            mode.doAfter();
+            mode = null;
         }
-        polygons = [];
+    };
+
+    Polygon.prototype.getPolygons = function () {
+        return polygons;
     };
 
     Polygon.prototype.addPolygon = function (polygon) {

@@ -57,6 +57,17 @@ var Utility = (function () {
             } else {
                 object.selectable = true;
             }
+        },
+        remove: function (canvas, object) {
+            if (Array.isArray(object)) {
+                for (var i = 0; i < object.length; i++) {
+                    canvas.remove(object[i]);
+                }
+                object = [];
+            } else {
+                canvas.remove(object);
+                object = null;
+            }
         }
-}
+    }
 }());
