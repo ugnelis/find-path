@@ -141,6 +141,14 @@ var AddMode = (function () {
         this.canvas.renderAll();
     };
 
+    AddMode.prototype.set = function (options) {
+        if (polygon != null) {
+            polygon.type = options.type;
+            polygon.setFill(Utility.setPolygonColor(polygon, false));
+            this.canvas.renderAll();
+        }
+    };
+
     AddMode.prototype.addLine = function (last) {
         if (points.length > 1) {
             var line;

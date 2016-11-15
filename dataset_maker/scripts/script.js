@@ -26,9 +26,9 @@
         polygon.addMode(addMode);
     }
 
-    function saveData() {
+    function setData() {
         var value = document.querySelector('input[name="type"]:checked').value;
-        polygon.saveData(value);
+        polygon.set({type: value});
     }
 
     function editData() {
@@ -55,7 +55,7 @@
 
     myFieldset.disabled = true;
     window.newPolygon = newPolygon;
-    window.saveData = saveData;
+    window.setData = setData;
     window.editData = editData;
     window.removeData = removeData;
 

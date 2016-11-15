@@ -62,5 +62,9 @@ var Polygon = (function () {
         mode.remove();
     };
 
+    Polygon.prototype.set = function (data) {
+        mode.set(data);
+    };
+
     return Polygon;
 }());

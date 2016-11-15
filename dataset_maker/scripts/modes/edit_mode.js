@@ -84,5 +84,13 @@ var EditMode = (function () {
         this.canvas.renderAll();
     };
 
+    EditMode.prototype.set = function (options) {
+        if (selectedPolygon != null) {
+            selectedPolygon.type = options.type;
+            selectedPolygon.setFill(Utility.setPolygonColor(selectedPolygon, true));
+            this.canvas.renderAll();
+        }
+    };
+
     return EditMode;
 }());

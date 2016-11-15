@@ -6,7 +6,7 @@ var Utility = (function () {
                 top: point.y,
                 strokeWidth: 5,
                 radius: 12,
-                fill: '#fff',
+                fill: '',
                 stroke: '#666',
                 selectable: false
             });
@@ -59,7 +59,6 @@ var Utility = (function () {
             }
         },
         generateCircles: function (points) {
-            console.log(points);
             var circles = [];
 
             for (var i = 0; i < points.length; i++) {
