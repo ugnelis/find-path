@@ -6,7 +6,10 @@
 <body>
 <canvas id="canvas" width="600" height="600"></canvas>
 <div>
-    <input type="file" id="file" onchange="handleFileSelect(this)" name="files"/>
+    <input type="file" id="open-file" onchange="handleFileSelect(this)" name="files"/>
+</div>
+<div>
+    <button id="save-file" onclick="handleFileSave()">Save File</button>
 </div>
 <div>
     <button id="add" onclick="newPolygon()">New Polygon</button>
@@ -26,10 +29,11 @@
 </fieldset>
 
 <script src="bower_components/fabric.js/dist/fabric.js"></script>
+<script src="bower_components/file-saver/FileSaver.js"></script>
 <script src="scripts/utility.js"></script>
 <script src="scripts/modes/add_mode.js"></script>
 <script src="scripts/modes/edit_mode.js"></script>
-<script src="scripts/polygon.js"></script>
+<script src="scripts/polygon_manager.js"></script>
 <script src="scripts/script.js"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-var Polygon = (function () {
+var PolygonManager = (function () {
 
     var canvas;
 
@@ -8,7 +8,7 @@ var Polygon = (function () {
 
     var mode;
 
-    function Polygon(canvas) {
+    function PolygonManager(canvas) {
         this.canvas = canvas;
 
         this.canvas.on('object:moving', function (event) {
@@ -28,7 +28,7 @@ var Polygon = (function () {
         });
     }
 
-    Polygon.prototype.addMode = function (add) {
+    PolygonManager.prototype.addMode = function (add) {
         if (add) {
             state = 'add';
             mode = new AddMode(this, this.canvas);
@@ -39,7 +39,7 @@ var Polygon = (function () {
         }
     };
 
-    Polygon.prototype.editMode = function (edit) {
+    PolygonManager.prototype.editMode = function (edit) {
         if (edit) {
             state = 'add';
             mode = new EditMode(this, this.canvas);
@@ -50,21 +50,21 @@ var Polygon = (function () {
         }
     };
 
-    Polygon.prototype.getPolygons = function () {
+    PolygonManager.prototype.getPolygons = function () {
         return polygons;
     };
 
-    Polygon.prototype.addPolygon = function (polygon) {
+    PolygonManager.prototype.addPolygon = function (polygon) {
         polygons.push(polygon);
     };
 
-    Polygon.prototype.removePolygon = function () {
+    PolygonManager.prototype.removePolygon = function () {
         mode.remove();
     };
 
-    Polygon.prototype.set = function (data) {
+    PolygonManager.prototype.set = function (data) {
         mode.set(data);
     };
 
-    return Polygon;
+    return PolygonManager;
 }());

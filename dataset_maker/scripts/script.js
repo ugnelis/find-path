@@ -1,6 +1,6 @@
 (function (window) {
     var canvas = this.__canvas = new fabric.Canvas('canvas', {selection: false});
-    var polygon = new Polygon(canvas);
+    var polygonManager = new PolygonManager(canvas);
 
     var addMode = false;
     var editMode = false;
@@ -8,7 +8,10 @@
     var addButton = document.getElementById("add");
     var editButton = document.getElementById("edit");
     var myFieldset = document.getElementById("myFieldset");
-    var file = document.getElementById('file');
+    var openFile = document.getElementById('open-file');
+    var saveFile = document.getElementById('save-file');
+
+    var file; // Image file;
 
     function newPolygon() {
         if (addMode == false) {
@@ -24,12 +27,12 @@
             editButton.disabled = false;
             myFieldset.disabled = true;
         }
-        polygon.addMode(addMode);
+        polygonManager.addMode(addMode);
     }
 
     function setData() {
         var value = document.querySelector('input[name="type"]:checked').value;
-        polygon.set({type: value});
+        polygonManager.set({type: value});
     }
 
     function editData() {
@@ -47,15 +50,17 @@
             addButton.disabled = false;
             myFieldset.disabled = true;
         }
-        polygon.editMode(editMode);
+        polygonManager.editMode(editMode);
     }
 
     function removeData() {
-        polygon.removePolygon();
+        polygonManager.removePolygon();
     }
 
     function handleFileSelect(object) {
-        var file = object.files[0];
+        file = object.files[0];
+
+        console.log(file);
 
         // Only process image file.
         if (!file.type.match('image.*')) {
@@ -90,6 +95,20 @@
         reader.readAsDataURL(file);
     }
 
+    function handleFileSave() {
+        var polygons = polygonManager.getPolygons();
+        var data = {};
+        data.polygons = [];
+        for (var i = 0; i < polygons.length; i++) {
+            data.polygons.push({type: polygons[i].type, points: polygons[i].points});
+        }
+        console.log(data);
+        var json = JSON.stringify(data);
+        var blob = new Blob([json], {type: "application/json"});
+        var url = URL.createObjectURL(blob);
+        saveAs(blob, file.name + ".json");
+    }
+
     addButton.disabled = true;
     editButton.disabled = true;
     myFieldset.disabled = true;
@@ -98,5 +117,6 @@
     window.editData = editData;
     window.removeData = removeData;
     window.handleFileSelect = handleFileSelect;
+    window.handleFileSave = handleFileSave;
 
 })(window);
