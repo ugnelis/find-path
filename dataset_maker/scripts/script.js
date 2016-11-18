@@ -73,7 +73,8 @@
                 // Set canvas size as the image size.
                 image.onload = function () {
                     canvas.setDimensions({width: this.width, height: this.height});
-                    console.log(canvas.width);
+                    addButton.disabled = false;
+                    editButton.disabled = false;
                 };
 
                 canvas.setBackgroundImage(image.src, canvas.renderAll.bind(canvas), {
@@ -89,6 +90,8 @@
         reader.readAsDataURL(file);
     }
 
+    addButton.disabled = true;
+    editButton.disabled = true;
     myFieldset.disabled = true;
     window.newPolygon = newPolygon;
     window.setData = setData;

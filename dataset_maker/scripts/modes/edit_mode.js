@@ -19,6 +19,19 @@ var EditMode = (function () {
 
     EditMode.prototype.eventObjectMoving = function (event) {
         var target = event.target;
+
+        if (target.left < 0)
+            target.left = 0;
+
+        if (target.left > this.canvas.getWidth())
+            target.left = this.canvas.getWidth();
+
+        if (target.top < 0)
+            target.top = 0;
+
+        if (target.top > this.canvas.getHeight())
+            target.top = this.canvas.getHeight();
+
         target.point.x = target.left;
         target.point.y = target.top;
         this.canvas.renderAll();
