@@ -5,17 +5,13 @@
 </head>
 <body>
 <canvas id="canvas" width="600" height="600"></canvas>
-<div>
-    <input type="file" id="open-file" onchange="handleFileSelect(this)" name="files"/>
-</div>
-<div>
-    <button id="save-file" onclick="handleFileSave()">Save File</button>
-</div>
+
 <div>
     <button id="add" onclick="newPolygon()">New Polygon</button>
     <button id="edit" onclick="editData()">Edit</button>
 </div>
-<fieldset id="myFieldset">
+
+<fieldset id="controllerFieldset">
     <div>
         <div>Type:</div>
         <input type="radio" name="type" value="good" id="good" checked/><label for="good">Good</label><br/>
@@ -25,6 +21,26 @@
     </div>
     <div>
         <button id="remove" onclick="removeData()">Remove</button>
+    </div>
+</fieldset>
+
+<fieldset id="fileFieldset">
+    <div>
+        <input type="file" id="open-file" onchange="handleFileSelect(this)" name="files"/>
+    </div>
+    <label for="alpha">Alpha:</label> <input type="number" step="any" name="alpha" id="alpha"><br>
+    <label for="beta">Beta: </label> <input type="number" step="any" name="beta" id="beta"><br>
+    <div>
+        <div>Class:</div>
+        <input type="radio" name="class" value="good" id="beach" checked/><label for="beach">Beach</label><br/>
+        <input type="radio" name="class" value="forest" id="forest"/><label for="forest">Forest</label><br/>
+        <input type="radio" name="class" value="indoor" id="indoor"/><label for="indoor">Indoor</label><br/>
+        <input type="radio" name="class" value="park" id="park"/><label for="park">Park</label><br/>
+        <input type="radio" name="class" value="street" id="street"/><label for="street">Street</label><br/>
+        <br/>
+    </div>
+    <div>
+        <button id="save-file" onclick="handleFileSave()">Save File</button>
     </div>
 </fieldset>
 

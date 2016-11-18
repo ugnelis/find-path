@@ -5,11 +5,20 @@
     var addMode = false;
     var editMode = false;
 
+    // Buttons
     var addButton = document.getElementById("add");
     var editButton = document.getElementById("edit");
-    var myFieldset = document.getElementById("myFieldset");
-    var openFile = document.getElementById('open-file');
-    var saveFile = document.getElementById('save-file');
+    var openFileButton = document.getElementById('open-file');
+    var saveFileButton = document.getElementById('save-file');
+
+    // Inputs
+    var alphaInput = document.getElementById("alpha");
+    var betaInput = document.getElementById("beta");
+
+    // Fieldsets
+    var fileFieldset = document.getElementById("fileFieldset");
+    var controllerFieldset = document.getElementById("controllerFieldset");
+
 
     var file; // Image file;
 
@@ -19,13 +28,13 @@
             addButton.innerHTML = "Done";
 
             editButton.disabled = true;
-            myFieldset.disabled = false;
+            controllerFieldset.disabled = false;
         } else if (addMode == true) {
             addMode = false;
             addButton.innerHTML = "New Polygon";
 
             editButton.disabled = false;
-            myFieldset.disabled = true;
+            controllerFieldset.disabled = true;
         }
         polygonManager.addMode(addMode);
     }
@@ -41,14 +50,14 @@
             editButton.innerHTML = "Done";
 
             addButton.disabled = true;
-            myFieldset.disabled = false;
+            controllerFieldset.disabled = false;
 
         } else if (editMode == true) {
             editMode = false;
             editButton.innerHTML = "Edit";
 
             addButton.disabled = false;
-            myFieldset.disabled = true;
+            controllerFieldset.disabled = true;
         }
         polygonManager.editMode(editMode);
     }
@@ -59,8 +68,6 @@
 
     function handleFileSelect(object) {
         file = object.files[0];
-
-        console.log(file);
 
         // Only process image file.
         if (!file.type.match('image.*')) {
@@ -98,11 +105,16 @@
     function handleFileSave() {
         var polygons = polygonManager.getPolygons();
         var data = {};
+        data.class = document.querySelector('input[name="class"]:checked').value;
+
+        data.alpha = Number(alphaInput.value);
+        data.beta = Number(betaInput.value);
+
         data.polygons = [];
         for (var i = 0; i < polygons.length; i++) {
             data.polygons.push({type: polygons[i].type, points: polygons[i].points});
         }
-        console.log(data);
+
         var json = JSON.stringify(data);
         var blob = new Blob([json], {type: "application/json"});
         var url = URL.createObjectURL(blob);
@@ -111,7 +123,7 @@
 
     addButton.disabled = true;
     editButton.disabled = true;
-    myFieldset.disabled = true;
+    controllerFieldset.disabled = true;
     window.newPolygon = newPolygon;
     window.setData = setData;
     window.editData = editData;

@@ -4,7 +4,7 @@
   "authors": [
     "Ugnius Malūkas <ugnius.malukas@gmail.com>"
   ],
-  "description": "Dataset Maker is for making dataset by separating rouds, paths in images for ktu-robots-intellect project.",
+  "description": "Dataset Maker is for making dataset by separating roads, paths in images for ktu-robots-intellect project.",
   "main": "",
   "private": true,
   "dependencies": {
