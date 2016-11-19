@@ -62,11 +62,11 @@ var AddMode = (function () {
                 firstCircle = Utility.makeCircle(points[points.length - 1]);
                 firstCircle.setFill('green');
                 circles.push(firstCircle);
-                this.canvas.add(firstCircle);
+                Utility.add(this.canvas, firstCircle);
             } else {
                 var circle = Utility.makeCircle(points[points.length - 1]);
                 circles.push(circle);
-                this.canvas.add(circle);
+                Utility.add(this.canvas, circle);
             }
         }
 
@@ -75,7 +75,8 @@ var AddMode = (function () {
             this.addLine(true);
 
             polygon = Utility.makePolygon(points);
-            this.canvas.sendToBack(polygon);
+            Utility.add(this.canvas, polygon);
+            Utility.bringToFront(this.canvas, circles);
 
             polygonCreated = true;
 
@@ -182,12 +183,10 @@ var AddMode = (function () {
             }
             lines.push(line);
 
-            this.canvas.add(line);
+            Utility.add(this.canvas, line);
 
             // Bring circles to front in canvas.
-            for (var i = 0; i < circles.length; i++) {
-                this.canvas.bringToFront(circles[i]);
-            }
+            Utility.bringToFront(this.canvas, circles)
         }
     };
 

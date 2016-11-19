@@ -38,15 +38,19 @@ var Utility = (function () {
         },
         setPolygonColor: function (polygon, hover) {
             if (polygon.type == 'none') {
-                return (hover) ? 'rgba(128, 0, 128, 1)' : 'rgba(128, 0, 128, 0.5)';
+                return (hover) ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.5)';
             }
 
-            if (polygon.type == 'good') {
+            if (polygon.type == 'route') {
                 return (hover) ? 'rgba(0, 153, 76, 1)' : 'rgba(0, 153, 76, 0.5)';
             }
 
-            if (polygon.type == 'bad') {
+            if (polygon.type == 'boundary') {
                 return (hover) ? 'rgba(204, 0, 0, 1)' : 'rgba(204, 0, 0, 0.5)';
+            }
+
+            if (polygon.type == 'obstacle') {
+                return (hover) ? 'rgba(128, 0, 128, 1)' : 'rgba(128, 0, 128, 0.5)';
             }
         },
         makeSelectable: function (object, value) {
@@ -75,6 +79,24 @@ var Utility = (function () {
                 }
             } else {
                 canvas.add(object);
+            }
+        },
+        bringToFront: function (canvas, object) {
+            if (Array.isArray(object)) {
+                for (var i = 0; i < object.length; i++) {
+                    canvas.bringToFront(object[i]);
+                }
+            } else {
+                canvas.bringToFront(object);
+            }
+        },
+        bringToBack: function (canvas, object) {
+            if (Array.isArray(object)) {
+                for (var i = 0; i < object.length; i++) {
+                    canvas.bringToBack(object[i]);
+                }
+            } else {
+                canvas.bringToBack(object);
             }
         },
         remove: function (canvas, object) {
