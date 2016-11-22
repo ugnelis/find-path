@@ -7,6 +7,12 @@
 <canvas id="canvas" width="600" height="600"></canvas>
 
 <div>
+    <label for="scale">Scale:</label>
+    <input type="range" id="scale" name="scale" min="0" max="10"/>
+    <button onclick="scale()">Scale</button>
+</div>
+
+<div>
     <button id="add" onclick="newPolygon()">New Polygon</button>
     <button id="edit" onclick="editData()">Edit</button>
 </div>

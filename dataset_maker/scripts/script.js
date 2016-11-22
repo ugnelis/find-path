@@ -14,13 +14,16 @@
     // Inputs
     var alphaInput = document.getElementById("alpha");
     var betaInput = document.getElementById("beta");
+    var scaleInput = document.getElementById("scale");
 
     // Fieldsets
     var fileFieldset = document.getElementById("fileFieldset");
     var controllerFieldset = document.getElementById("controllerFieldset");
 
+    var tempImage; // Image file;
 
-    var file; // Image file;
+    var minScale = 320;
+    var maxScale = 600;
 
     function newPolygon() {
         if (addMode == false) {
@@ -67,7 +70,7 @@
     }
 
     function handleFileSelect(object) {
-        file = object.files[0];
+        var file = object.files[0];
 
         // Only process image file.
         if (!file.type.match('image.*')) {
@@ -87,6 +90,8 @@
                     canvas.setDimensions({width: this.width, height: this.height});
                     addButton.disabled = false;
                     editButton.disabled = false;
+                    scaleInput.max = image.width;
+                    tempImage = image;
                 };
 
                 canvas.setBackgroundImage(image.src, canvas.renderAll.bind(canvas), {
@@ -121,14 +126,55 @@
         saveAs(blob, file.name + ".json");
     }
 
+
+    // 1980 1080
+    // 320  x
+    function scale() {
+        var width = scaleInput.value;
+        var height = width * canvas.height / canvas.width;
+
+        resizeCanvas(width, height);
+        //canvas.setDimensions({width: width, height: height});
+
+
+        // tempImage.width = width;
+        // tempImage.height = height;
+        //
+        //
+        // canvas.setBackgroundImage(tempImage.src, canvas.renderAll.bind(canvas), {
+        //     originX: 'left',
+        //     originY: 'top',
+        //     left: 0,
+        //     top: 0
+        // });
+        //
+        // console.log(tempImage.width);
+        // console.log(tempImage.height);
+
+    }
+
+    function resizeCanvas(width, height)
+    {
+        canvas.backgroundImage.scaleToWidth(width);
+        canvas.backgroundImage.scaleToHeight(height);
+        canvas.setDimensions({width: width, height: height});
+        canvas.renderAll();
+    }
+
     addButton.disabled = true;
     editButton.disabled = true;
     controllerFieldset.disabled = true;
+
+    scaleInput.min = minScale;
+    scaleInput.max = maxScale;
+
     window.newPolygon = newPolygon;
     window.setData = setData;
     window.editData = editData;
     window.removeData = removeData;
     window.handleFileSelect = handleFileSelect;
     window.handleFileSave = handleFileSave;
+    window.scale = scale;
+
 
 })(window);
