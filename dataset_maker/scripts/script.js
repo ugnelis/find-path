@@ -133,31 +133,28 @@
         var width = scaleInput.value;
         var height = width * canvas.height / canvas.width;
 
+        resizeObjects(width, height);
         resizeCanvas(width, height);
-        //canvas.setDimensions({width: width, height: height});
-
-
-        // tempImage.width = width;
-        // tempImage.height = height;
-        //
-        //
-        // canvas.setBackgroundImage(tempImage.src, canvas.renderAll.bind(canvas), {
-        //     originX: 'left',
-        //     originY: 'top',
-        //     left: 0,
-        //     top: 0
-        // });
-        //
-        // console.log(tempImage.width);
-        // console.log(tempImage.height);
-
     }
 
-    function resizeCanvas(width, height)
-    {
+    function resizeCanvas(width, height) {
         canvas.backgroundImage.scaleToWidth(width);
         canvas.backgroundImage.scaleToHeight(height);
         canvas.setDimensions({width: width, height: height});
+        canvas.renderAll();
+    }
+
+    function resizeObjects(width, height) {
+        var polygons = polygonManager.getPolygons();
+
+        for (var i = 0; i < polygons.length; i++) {
+            var points = polygons[i].points;
+
+            for (var j = 0; j < points.length; j++) {
+                points[j].x = width * points[j].x / canvas.width;
+                points[j].y = height * points[j].y / canvas.height;
+            }
+        }
         canvas.renderAll();
     }
 
