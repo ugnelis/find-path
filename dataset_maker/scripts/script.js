@@ -25,6 +25,9 @@
     var minScale = 320;
     var maxScale = 600;
 
+    var width;
+    var height;
+
     function newPolygon() {
         if (addMode == false) {
             addMode = true;
@@ -122,16 +125,18 @@
 
         var json = JSON.stringify(data);
         var blob = new Blob([json], {type: "application/json"});
-        var url = URL.createObjectURL(blob);
-        saveAs(blob, file.name + ".json");
+        saveAs(blob, tempImage.name + ".json");
+
+        // TODO make Save Dialog for scaled images
+        var scaledImage = canvas.backgroundImage.toDataURL('png');
+        window.open(scaledImage, );
+
+        canvas.deactivateAll().renderAll();
     }
 
-
-    // 1980 1080
-    // 320  x
     function scale() {
-        var width = scaleInput.value;
-        var height = width * canvas.height / canvas.width;
+        width = scaleInput.value;
+        height = width * canvas.height / canvas.width;
 
         resizeObjects(width, height);
         resizeCanvas(width, height);
@@ -172,6 +177,5 @@
     window.handleFileSelect = handleFileSelect;
     window.handleFileSave = handleFileSave;
     window.scale = scale;
-
 
 })(window);
