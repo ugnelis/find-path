@@ -15,12 +15,11 @@
     var alphaInput = document.getElementById("alpha");
     var betaInput = document.getElementById("beta");
     var scaleInput = document.getElementById("scale");
+    var fileNameInput = document.getElementById("fileName");
 
     // Fieldsets
     var fileFieldset = document.getElementById("fileFieldset");
     var controllerFieldset = document.getElementById("controllerFieldset");
-
-    var tempImage; // Image file;
 
     var minScale = 320;
     var maxScale = 600;
@@ -83,7 +82,7 @@
         var reader = new FileReader();
 
         // Closure to capture the file information.
-        reader.onload = (function (theFile) {
+        reader.onload = (function (file) {
             return function (event) {
                 var image = new Image();
                 image.src = event.target.result;
@@ -94,7 +93,7 @@
                     addButton.disabled = false;
                     editButton.disabled = false;
                     scaleInput.max = image.width;
-                    tempImage = image;
+                    fileNameInput.value = file.name.substr(0, file.name.lastIndexOf('.')); // remove file extension
                 };
 
                 canvas.setBackgroundImage(image.src, canvas.renderAll.bind(canvas), {
@@ -125,11 +124,11 @@
 
         var json = JSON.stringify(data);
         var blob = new Blob([json], {type: "application/json"});
-        saveAs(blob, tempImage.name + ".json");
+        saveAs(blob, fileNameInput.value + ".json");
 
         // TODO make Save Dialog for scaled images
         var scaledImage = canvas.backgroundImage.toDataURL('png');
-        window.open(scaledImage, );
+        window.open(scaledImage);
 
         canvas.deactivateAll().renderAll();
     }
