@@ -110,6 +110,7 @@
     }
 
     function handleFileSave() {
+
         var polygons = polygonManager.getPolygons();
         var data = {};
         data.class = document.querySelector('input[name="class"]:checked').value;
@@ -123,14 +124,29 @@
         }
 
         var json = JSON.stringify(data);
-        var blob = new Blob([json], {type: "application/json"});
-        saveAs(blob, fileNameInput.value + ".json");
+        var jsonBlob = new Blob([json], {type: "application/json"});
+        // Open Dialog for json
+        saveAs(jsonBlob, fileNameInput.value + ".json");
 
-        // TODO make Save Dialog for scaled images
         var scaledImage = canvas.backgroundImage.toDataURL('png');
-        window.open(scaledImage);
+        var base64image = scaledImage.replace(/^data:image\/(png|jpg);base64,/, "");
+
+        var binary = convertBinaryToUnicode(atob(base64image));
+        var imageBlob = new Blob([binary], {type: 'image/png'});
+        // Open Dialog for image
+        saveAs(imageBlob, fileNameInput.value + ".png");
 
         canvas.deactivateAll().renderAll();
+    }
+
+    function convertBinaryToUnicode(binaryImage) {
+        var length = binaryImage.length;
+        var buffer = new ArrayBuffer(length);
+        var array = new Uint8Array(buffer);
+        for (var i = 0; i < length; i++) {
+            array[i] = binaryImage.charCodeAt(i);
+        }
+        return buffer;
     }
 
     function scale() {
