@@ -132,9 +132,9 @@
         var base64image = scaledImage.replace(/^data:image\/(png|jpg);base64,/, "");
 
         var binary = convertBinaryToUnicode(atob(base64image));
-        var imageBlob = new Blob([binary], {type: 'image/png'});
+        var imageBlob = new Blob([binary], {type: 'image/octet-stream'});
         // Open Dialog for image
-        saveAs(imageBlob, fileNameInput.value + ".png");
+        saveAs(imageBlob, fileNameInput.value + ".jpg");
 
         canvas.deactivateAll().renderAll();
     }
