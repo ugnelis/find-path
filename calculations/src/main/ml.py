@@ -4,7 +4,7 @@ import glob
 import re
 import hashlib
 
-resource = '../resources/dataset/type'
+resource = '../../../dataset'
 
 
 def read_files_my(dir):
@@ -84,7 +84,7 @@ def read_files(image_dir):
 
 def main():
     test = read_files(resource)
-    print(test['forest']['set'])
+    print(test)
 
     # TODO padaryt ['tipas']['set'].len => ['visas kiekis']['dydis]['plotis']['channels']
 if __name__ == '__main__':

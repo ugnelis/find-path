@@ -128,11 +128,11 @@
         // Open Dialog for json
         saveAs(jsonBlob, fileNameInput.value + ".json");
 
-        var scaledImage = canvas.backgroundImage.toDataURL('png');
-        var base64image = scaledImage.replace(/^data:image\/(png|jpg);base64,/, "");
+        var scaledImage = canvas.backgroundImage.toDataURL({format: 'jpeg' });
+        var base64image = scaledImage.replace(/^data:image\/(png|jpeg);base64,/, "");
 
         var binary = convertBinaryToUnicode(atob(base64image));
-        var imageBlob = new Blob([binary], {type: 'image/octet-stream'});
+        var imageBlob = new Blob([binary], {type: 'image/jpeg'});
         // Open Dialog for image
         saveAs(imageBlob, fileNameInput.value + ".jpg");
 
