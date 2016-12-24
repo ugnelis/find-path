@@ -53,21 +53,17 @@ def read_image(dir):
     return image
 
 
-def save_image(image):
-    cur_dir = os.getcwd()
+def save_image(image_tensor, image_name="image"):
+    current_dir = os.getcwd()
 
     init = tf.initialize_all_variables()
     sess = tf.Session()
     sess.run(init)
     tf.train.start_queue_runners(sess=sess)
-    img = sess.run(image)
-    print(img)
 
-    for i in range(1):
-        img = sess.run(image)
-        print(img.shape)
-        img = Image.fromarray(img, "RGB")
-        img.save(os.path.join(cur_dir, "foo" + str(i) + ".jpeg"))
+    img = sess.run(image_tensor)
+    img = Image.fromarray(img, "RGB")
+    img.save(os.path.join(current_dir, image_name + ".jpg"))
 
 
 def main():
