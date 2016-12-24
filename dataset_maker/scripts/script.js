@@ -8,7 +8,8 @@
     // Buttons
     var addButton = document.getElementById("add");
     var editButton = document.getElementById("edit");
-    var openFileButton = document.getElementById('open-file');
+    var openImageButton = document.getElementById('open-image');
+    var openJsonButton = document.getElementById('open-json');
     var saveFileButton = document.getElementById('save-file');
 
     // Inputs
@@ -71,7 +72,7 @@
         polygonManager.removePolygon();
     }
 
-    function handleFileSelect(object) {
+    function handleImageSelect(object) {
         var file = object.files[0];
 
         // Only process image file.
@@ -109,6 +110,28 @@
         reader.readAsDataURL(file);
     }
 
+    function handleJsonSelect(object) {
+        var file = object.files[0];
+
+        // Only process image file.
+        if (!file.type.match('application/json')) {
+            return;
+        }
+
+        var reader = new FileReader();
+
+        // Closure to capture the file information.
+        reader.onload = (function (file) {
+            return function (event) {
+                var jsonObject = JSON.parse(event.target.result);
+                setParameters(jsonObject);
+                console.log(jsonObject);
+            };
+        })(file);
+        // Read in the image file as a data URL.
+        reader.readAsText(file);
+    }
+
     function handleFileSave() {
 
         var polygons = polygonManager.getPolygons();
@@ -128,7 +151,7 @@
         // Open Dialog for json
         saveAs(jsonBlob, fileNameInput.value + ".json");
 
-        var scaledImage = canvas.backgroundImage.toDataURL({format: 'jpeg' });
+        var scaledImage = canvas.backgroundImage.toDataURL({format: 'jpeg'});
         var base64image = scaledImage.replace(/^data:image\/(png|jpeg);base64,/, "");
 
         var binary = convertBinaryToUnicode(atob(base64image));
@@ -137,6 +160,13 @@
         saveAs(imageBlob, fileNameInput.value + ".jpg");
 
         canvas.deactivateAll().renderAll();
+    }
+
+    function setParameters(object) {
+        document.getElementById(object.class).checked = true;
+        alphaInput.value = object.alpha;
+        betaInput.value = object.beta;
+        // ...
     }
 
     function convertBinaryToUnicode(binaryImage) {
@@ -189,7 +219,8 @@
     window.setData = setData;
     window.editData = editData;
     window.removeData = removeData;
-    window.handleFileSelect = handleFileSelect;
+    window.handleImageSelect = handleImageSelect;
+    window.handleJsonSelect = handleJsonSelect;
     window.handleFileSave = handleFileSave;
     window.scale = scale;
 

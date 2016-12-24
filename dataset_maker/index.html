@@ -33,13 +33,14 @@
 
 <fieldset id="fileFieldset">
     <div>
-        <input type="file" id="open-file" onchange="handleFileSelect(this)" name="files"/>
+        <input type="file" id="open-image" onchange="handleImageSelect(this)" name="files"/>
+        <input type="file" id="open-json" onchange="handleJsonSelect(this)" name="files"/>
     </div>
     <label for="alpha">Alpha:</label> <input type="number" step="any" name="alpha" id="alpha"><br>
     <label for="beta">Beta: </label> <input type="number" step="any" name="beta" id="beta"><br>
     <div>
         <div>Class:</div>
-        <input type="radio" name="class" value="good" id="beach" checked/><label for="beach">Beach</label><br/>
+        <input type="radio" name="class" value="beach" id="beach" checked/><label for="beach">Beach</label><br/>
         <input type="radio" name="class" value="forest" id="forest"/><label for="forest">Forest</label><br/>
         <input type="radio" name="class" value="indoor" id="indoor"/><label for="indoor">Indoor</label><br/>
         <input type="radio" name="class" value="park" id="park"/><label for="park">Park</label><br/>
