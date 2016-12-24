@@ -1,7 +1,9 @@
+import tensorflow as tf
 import numpy as np
 import os.path
 import glob
 import json
+from PIL import Image
 
 resource = '../../../dataset'
 
@@ -28,19 +30,44 @@ def read_files(dir):
 
         # Check if image JSON file exists
         if not os.path.exists(json_path):
-             print("JSON file '" + json_path + "' not found.")
-             continue
+            print("JSON file '" + json_path + "' not found.")
+            continue
 
         with open(json_path) as data_file:
             data = json.load(data_file)
 
         item = {
-            'image': file_name, # TODO here should be image array
+            'image': read_image(file),
             'data': data
         }
         result.append(item)
 
     return result
+
+
+def read_image(dir):
+    filename_queue = tf.train.string_input_producer([dir])
+    reader = tf.WholeFileReader()
+    key, value = reader.read(filename_queue)
+    image = tf.image.decode_jpeg(value)
+    return image
+
+
+def save_image(image):
+    cur_dir = os.getcwd()
+
+    init = tf.initialize_all_variables()
+    sess = tf.Session()
+    sess.run(init)
+    tf.train.start_queue_runners(sess=sess)
+    img = sess.run(image)
+    print(img)
+
+    for i in range(1):
+        img = sess.run(image)
+        print(img.shape)
+        img = Image.fromarray(img, "RGB")
+        img.save(os.path.join(cur_dir, "foo" + str(i) + ".jpeg"))
 
 
 def main():
