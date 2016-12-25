@@ -16,11 +16,11 @@
     var alphaInput = document.getElementById("alpha");
     var betaInput = document.getElementById("beta");
     var scaleInput = document.getElementById("scale");
-    var fileNameInput = document.getElementById("fileName");
+    var fileNameInput = document.getElementById("file-name");
 
     // Fieldsets
-    var fileFieldset = document.getElementById("fileFieldset");
-    var controllerFieldset = document.getElementById("controllerFieldset");
+    var fileFieldset = document.getElementById("file-fieldset");
+    var controllerFieldset = document.getElementById("controller-fieldset");
 
     var minScale = 320;
     var maxScale = 600;
@@ -93,6 +93,7 @@
                     canvas.setDimensions({width: this.width, height: this.height});
                     addButton.disabled = false;
                     editButton.disabled = false;
+                    openJsonButton.disabled = false;
                     scaleInput.max = image.width;
                     fileNameInput.value = file.name.substr(0, file.name.lastIndexOf('.')); // remove file extension
                 };
@@ -166,7 +167,18 @@
         document.getElementById(object.class).checked = true;
         alphaInput.value = object.alpha;
         betaInput.value = object.beta;
-        // ...
+        console.log(polygonManager.getPolygons());
+
+        for (var i = 0; i < object.polygons.length; i++) {
+            // TODO refactor this part in the future
+            var polygon = Utility.makePolygon(object.polygons[i].points);
+            polygon.type = object.polygons[i].type;
+            polygon.setFill(Utility.setPolygonColor(polygon, false));
+            polygonManager.addPolygon(polygon);
+            Utility.add(canvas, polygon);
+            console.log(polygon);
+        }
+        canvas.renderAll();
     }
 
     function convertBinaryToUnicode(binaryImage) {
@@ -211,6 +223,7 @@
     addButton.disabled = true;
     editButton.disabled = true;
     controllerFieldset.disabled = true;
+    openJsonButton.disabled = true;
 
     scaleInput.min = minScale;
     scaleInput.max = maxScale;

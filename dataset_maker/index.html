@@ -17,7 +17,7 @@
     <button id="edit" onclick="editData()">Edit</button>
 </div>
 
-<fieldset id="controllerFieldset">
+<fieldset id="controller-fieldset">
     <div>
         <div>Type:</div>
         <input type="radio" name="type" value="route" id="route" checked/><label for="route">Route</label><br/>
@@ -31,10 +31,10 @@
     </div>
 </fieldset>
 
-<fieldset id="fileFieldset">
+<fieldset id="file-fieldset">
     <div>
-        <input type="file" id="open-image" onchange="handleImageSelect(this)" name="files"/>
-        <input type="file" id="open-json" onchange="handleJsonSelect(this)" name="files"/>
+        <label for="open-image">Open image: </label><input type="file" id="open-image" onchange="handleImageSelect(this)" name="files"/>
+        <label for="open-image">Open json: </label><input type="file" id="open-json" onchange="handleJsonSelect(this)" name="files"/>
     </div>
     <label for="alpha">Alpha:</label> <input type="number" step="any" name="alpha" id="alpha"><br>
     <label for="beta">Beta: </label> <input type="number" step="any" name="beta" id="beta"><br>
@@ -49,7 +49,7 @@
     </div>
     <div>
         <button id="save-file" onclick="handleFileSave()">Save File</button>
-        <label for="fileName">File name: </label> <input name="fileName" id="fileName">
+        <label for="file-name">File name: </label><input name="file-name" id="file-name">
     </div>
 </fieldset>
 
