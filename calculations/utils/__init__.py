@@ -6,8 +6,6 @@ import json
 from PIL import Image
 import cv2
 
-resource = '../../../dataset'
-
 ROUTE_COLOR = (0, 153, 76)
 OBSTACLE_COLOR = (128, 0, 128)
 BOUNDARY_COLOR = (204, 0, 0)
@@ -104,12 +102,3 @@ def points_to_list(points):
         points_list.append([int(point['x']), int(point['y'])])
 
     return points_list
-
-
-def main():
-    test = read_files(resource)
-    print(test)
-
-
-if __name__ == '__main__':
-    main()
