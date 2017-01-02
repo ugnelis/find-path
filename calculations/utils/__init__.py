@@ -10,6 +10,9 @@ ROUTE_COLOR = (0, 153, 76)
 OBSTACLE_COLOR = (128, 0, 128)
 BOUNDARY_COLOR = (204, 0, 0)
 
+INPUT = 'input'
+OUTPUT = 'output'
+
 
 def read_files(dir):
     if not os.path.isdir(dir):
@@ -44,10 +47,9 @@ def read_files(dir):
         image_regions_path = dir + '/' + file_name + '_.jpg'
         save_image_with_regions(file, data['polygons'])
 
-        # TODO make output as an array
         item = {
-            'image': read_image(file),
-            'output': read_image(image_regions_path),
+            INPUT: read_image(file),
+            OUTPUT: read_image(image_regions_path),
             # 'data': data,
             # 'dir': file
         }
@@ -102,3 +104,13 @@ def points_to_list(points):
         points_list.append([int(point['x']), int(point['y'])])
 
     return points_list
+
+
+def split_dataset(dataset):
+    input = []
+    output = []
+    for data in dataset:
+        input.append(data[INPUT])
+        output.append(data[OUTPUT])
+
+    return input, output
