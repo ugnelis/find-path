@@ -5,10 +5,11 @@ import glob
 import json
 from PIL import Image
 import cv2
+import skimage.io
 
-ROUTE_COLOR = (0, 153, 76)
+ROUTE_COLOR = (0, 0, 0)
 OBSTACLE_COLOR = (128, 0, 128)
-BOUNDARY_COLOR = (204, 0, 0)
+BOUNDARY_COLOR = (255, 255, 255)
 
 INPUT = 'input'
 OUTPUT = 'output'
@@ -52,6 +53,49 @@ def read_files(dir):
             OUTPUT: read_image(image_regions_path),
             # 'data': data,
             # 'dir': file
+        }
+        result.append(item)
+
+    return result
+
+
+# TODO change Graycolor to RGB and refactor function
+def read_files_with_skimage(dir):
+    if not os.path.isdir(dir):
+        print("Image directory '" + dir + "' not found.")
+        return None
+    result = {}
+
+    extensions = ['jpg', 'jpeg', 'JPG', 'JPEG']
+    file_list = []
+
+    print("Looking for images in '" + dir + "'")
+
+    for extension in extensions:
+        file_glob = os.path.join(dir, '*.' + extension)
+        file_list.extend(glob.glob(file_glob))
+
+    result = []
+    for file in file_list:
+        file_name = os.path.splitext(os.path.basename(file))[0]
+        json_path = dir + '/' + file_name + '.json'
+
+        # Check if image JSON file exists
+        if not os.path.exists(json_path):
+            print("JSON file '" + json_path + "' not found.")
+            continue
+
+        # Read JSON data
+        with open(json_path) as data_file:
+            data = json.load(data_file)
+
+        # Create new image with regions
+        image_regions_path = dir + '/' + file_name + '_.jpg'
+        save_image_with_regions(file, data['polygons'])
+
+        item = {
+            INPUT: skimage.io.imread(file, True),
+            OUTPUT: skimage.io.imread(image_regions_path, True)
         }
         result.append(item)
 
