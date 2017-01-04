@@ -128,15 +128,15 @@ def main(argv):
     with tf.Session() as sess:
         sess.run(init)
         # Import data
-        input = [skimage.io.imread("../../dataset/1.jpg", True)]
-        output = [skimage.io.imread("../../dataset/1_.jpg", True)]
+        input = [skimage.io.imread("../../dataset/1.jpg", True), skimage.io.imread("../../dataset/2.jpg", True)]
+        output = [skimage.io.imread("../../dataset/1_.jpg", True), skimage.io.imread("../../dataset/2.jpg", True)]
 
         input = np.asarray(input)
         output = np.asarray(output)
 
         test_x = np.reshape(input[0], (-1, 180, 320))
 
-        output = np.reshape(output, (1, 180 * 320))
+        output = np.reshape(output, (2, 180 * 320))
         print(output.shape)
         for step in range(51):
             sess.run(optimizer, feed_dict={x: input, y: output})
@@ -144,17 +144,17 @@ def main(argv):
                 print("Current step: ", step)
 
         print("Done")
-
-        # Make a prediction
-        prediction = sess.run(pred, feed_dict={x: test_x})
-        prediction = np.reshape(prediction, (180, 320))
-
-        prediction[prediction > 1] = 1
-        prediction[prediction < -1] = -1
-
-        print(prediction)
-
-        skimage.io.imsave("works.jpg", prediction)
+        #
+        # # Make a prediction
+        # prediction = sess.run(pred, feed_dict={x: test_x})
+        # prediction = np.reshape(prediction, (180, 320))
+        #
+        # prediction[prediction > 1] = 1
+        # prediction[prediction < -1] = -1
+        #
+        # print(prediction)
+        #
+        # skimage.io.imsave("works.jpg", prediction)
 
 
 if __name__ == '__main__':
