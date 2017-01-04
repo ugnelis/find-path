@@ -6,7 +6,6 @@ import numpy as np
 RESOURCE = '../../dataset'
 HEIGHT = 180
 WIDTH = 320
-BATCH_SIZE = 2
 
 
 def conv2d(x, W, b, strides=1):
@@ -77,9 +76,23 @@ def multilayer_perceptron(x, weights, biases, use_dropout=False):
 
 
 def main(argv):
-    # dataset = utils.read_files(resource)
-    # input, output = utils.split_dataset(dataset)
+    # Import data
+    dataset = utils.read_files_with_skimage(RESOURCE)
+    input, output = utils.split_dataset(dataset)
+    batch_size = len(input)
 
+    # Make data as Numpy array
+    input = np.asarray(input)
+    output = np.asarray(output)
+
+    # HEIGHT * WIDTH because y place holder also has HEIGHT * WIDTH
+    output = np.reshape(output, (batch_size, HEIGHT * WIDTH))
+
+    # Test value
+    test_x = skimage.io.imread("../../dataset/1.jpg", True)
+    test_x = np.reshape(test_x, (1, 180, 320))
+
+    # Tensorflow placeholders
     x = tf.placeholder(tf.float32, [None, HEIGHT, WIDTH])
     y = tf.placeholder(tf.float32, [None, HEIGHT * WIDTH], name="ground_truth")
 
@@ -113,7 +126,7 @@ def main(argv):
     pred = tf.reshape(pred, [-1, HEIGHT * WIDTH])
 
     with tf.name_scope("opt") as scope:
-        cost = tf.reduce_sum(tf.pow((pred - y), 2)) / (2 * BATCH_SIZE)
+        cost = tf.reduce_sum(tf.pow((pred - y), 2)) / (2 * batch_size)
         optimizer = tf.train.AdamOptimizer(learning_rate=0.001).minimize(cost)
 
     # Evaluate model
@@ -127,34 +140,29 @@ def main(argv):
 
     with tf.Session() as sess:
         sess.run(init)
-        # Import data
-        input = [skimage.io.imread("../../dataset/1.jpg", True), skimage.io.imread("../../dataset/2.jpg", True)]
-        output = [skimage.io.imread("../../dataset/1_.jpg", True), skimage.io.imread("../../dataset/2.jpg", True)]
 
-        input = np.asarray(input)
-        output = np.asarray(output)
+        for step in range(100):
+            feed_dict = {x: input, y: output}
+            _, loss, acc = sess.run([optimizer, cost, accuracy], feed_dict=feed_dict)
 
-        test_x = np.reshape(input[0], (-1, 180, 320))
-
-        output = np.reshape(output, (2, 180 * 320))
-        print(output.shape)
-        for step in range(51):
-            sess.run(optimizer, feed_dict={x: input, y: output})
-            if step % 20 == 0:
-                print("Current step: ", step)
+            if step % 10 == 0:
+                print("Minibatch loss at step ", step, ": ", cost)
+                print("Minibatch accuracy: ",  acc)
 
         print("Done")
-        #
-        # # Make a prediction
-        # prediction = sess.run(pred, feed_dict={x: test_x})
-        # prediction = np.reshape(prediction, (180, 320))
-        #
-        # prediction[prediction > 1] = 1
-        # prediction[prediction < -1] = -1
-        #
-        # print(prediction)
-        #
-        # skimage.io.imsave("works.jpg", prediction)
+
+        # Make a prediction
+        prediction = sess.run(pred, feed_dict={x: test_x})
+        prediction = np.reshape(prediction, (HEIGHT, WIDTH))
+        prediction = prediction.astype(int)
+        print(prediction)
+
+        prediction[prediction > 255] = 255
+        prediction[prediction < 0] = 0
+
+        print(prediction)
+
+        skimage.io.imsave("works.jpg", prediction)
 
 
 if __name__ == '__main__':
