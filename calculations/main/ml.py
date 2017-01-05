@@ -37,7 +37,7 @@ def multilayer_perceptron(x, weights, biases, use_dropout=False):
 
     # 1st deconvolution layer
     with tf.name_scope("deconv1") as scope:
-        output_shape = [batch_size, HEIGHT // 4, WIDTH // 4, 16]
+        output_shape = [batch_size, HEIGHT // 4, WIDTH // 4, 64]
         deconv1 = tf.nn.conv2d_transpose(conv3,
                                          weights['wdc1'],
                                          output_shape=output_shape,
@@ -48,7 +48,7 @@ def multilayer_perceptron(x, weights, biases, use_dropout=False):
 
     # 2nd deconvolution layer
     with tf.name_scope("deconv2") as scope:
-        output_shape = [batch_size, HEIGHT // 2, WIDTH // 2, 8]
+        output_shape = [batch_size, HEIGHT // 2, WIDTH // 2, 32]
         deconv2 = tf.nn.conv2d_transpose(deconv1,
                                          weights['wdc2'],
                                          output_shape=output_shape,
@@ -93,25 +93,21 @@ def main(argv):
 
     weights = {
         # 5x5 conv, 1 input, 32 outputs
-        'wc1': tf.Variable(tf.random_normal([5, 5, 1, 8])),
+        'wc1': tf.Variable(tf.random_normal([5, 5, 1, 32])),
         # 5x5 conv, 32 inputs, 64 outputs
-        'wc2': tf.Variable(tf.random_normal([5, 5, 8, 16])),
-        # 5x5 conv, 32 inputs, 64 outputs
-        'wc3': tf.Variable(tf.random_normal([5, 5, 16, 32])),
-
-        'wdc1': tf.Variable(tf.random_normal([2, 2, 16, 32])),
-
-        'wdc2': tf.Variable(tf.random_normal([2, 2, 8, 16])),
-
-        'wdc3': tf.Variable(tf.random_normal([2, 2, 1, 8])),
+        'wc2': tf.Variable(tf.random_normal([5, 5, 32, 64])),
+        'wc3': tf.Variable(tf.random_normal([5, 5, 64, 128])),
+        'wdc1': tf.Variable(tf.random_normal([2, 2, 64, 128])),
+        'wdc2': tf.Variable(tf.random_normal([2, 2, 32, 64])),
+        'wdc3': tf.Variable(tf.random_normal([2, 2, 1, 32])),
     }
 
     biases = {
-        'bc1': tf.Variable(tf.random_normal([8])),
-        'bc2': tf.Variable(tf.random_normal([16])),
-        'bc3': tf.Variable(tf.random_normal([32])),
-        'bdc1': tf.Variable(tf.random_normal([16])),
-        'bdc2': tf.Variable(tf.random_normal([8])),
+        'bc1': tf.Variable(tf.random_normal([32])),
+        'bc2': tf.Variable(tf.random_normal([64])),
+        'bc3': tf.Variable(tf.random_normal([128])),
+        'bdc1': tf.Variable(tf.random_normal([64])),
+        'bdc2': tf.Variable(tf.random_normal([32])),
         'bdc3': tf.Variable(tf.random_normal([1])),
     }
 
