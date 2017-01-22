@@ -8,53 +8,10 @@ HEIGHT = 180
 WIDTH = 320
 
 
-def unravel_argmax(argmax, shape):
-    output_list = [argmax // (shape[2] * shape[3]),
-                   argmax % (shape[2] * shape[3]) // shape[3]]
-    return tf.pack(output_list)
-
-
-def unpool_layer2x2_batch(bottom, argmax):
-    bottom_shape = tf.shape(bottom)
-    top_shape = [bottom_shape[0], bottom_shape[1] * 2, bottom_shape[2] * 2, bottom_shape[3]]
-
-    batch_size = top_shape[0]
-    height = top_shape[1]
-    width = top_shape[2]
-    channels = top_shape[3]
-
-    argmax_shape = tf.to_int64([batch_size, height, width, channels])
-    argmax = unravel_argmax(argmax, argmax_shape)
-
-    t1 = tf.to_int64(tf.range(channels))
-    t1 = tf.tile(t1, [batch_size * (width // 2) * (height // 2)])
-    t1 = tf.reshape(t1, [-1, channels])
-    t1 = tf.transpose(t1, perm=[1, 0])
-    t1 = tf.reshape(t1, [channels, batch_size, height // 2, width // 2, 1])
-    t1 = tf.transpose(t1, perm=[1, 0, 2, 3, 4])
-
-    t2 = tf.to_int64(tf.range(batch_size))
-    t2 = tf.tile(t2, [channels * (width // 2) * (height // 2)])
-    t2 = tf.reshape(t2, [-1, batch_size])
-    t2 = tf.transpose(t2, perm=[1, 0])
-    t2 = tf.reshape(t2, [batch_size, channels, height // 2, width // 2, 1])
-
-    t3 = tf.transpose(argmax, perm=[1, 4, 2, 3, 0])
-
-    t = tf.concat(4, [t2, t3, t1])
-    indices = tf.reshape(t, [(height // 2) * (width // 2) * channels * batch_size, 4])
-
-    x1 = tf.transpose(bottom, perm=[0, 3, 1, 2])
-    values = tf.reshape(x1, [-1])
-
-    delta = tf.SparseTensor(indices, values, tf.to_int64(top_shape))
-    return tf.sparse_tensor_to_dense(tf.sparse_reorder(delta))
-
-
 # Create model
 def multilayer_perceptron(x, weights, biases, use_dropout=False):
     # Reshape input picture
-    x = tf.reshape(x, shape=[-1, HEIGHT, WIDTH, 3])
+    x = tf.reshape(x, shape=[-1, HEIGHT, WIDTH, 1])
     batch_size = tf.shape(x)[0]
 
     # 1st convolution layer
@@ -80,9 +37,8 @@ def multilayer_perceptron(x, weights, biases, use_dropout=False):
 
     # 1st deconvolution layer
     with tf.name_scope("deconv1") as scope:
-        output_shape = [batch_size, HEIGHT // 4, WIDTH // 4, 32]
-        deconv1 = unpool_layer2x2_batch(conv3, tf.argmax(conv3))
-        deconv1 = tf.nn.conv2d_transpose(deconv1,
+        output_shape = [batch_size, HEIGHT // 4, WIDTH // 4, 64]
+        deconv1 = tf.nn.conv2d_transpose(conv3,
                                          weights['wdc1'],
                                          output_shape=output_shape,
                                          strides=[1, 2, 2, 1],
@@ -92,8 +48,7 @@ def multilayer_perceptron(x, weights, biases, use_dropout=False):
 
     # 2nd deconvolution layer
     with tf.name_scope("deconv2") as scope:
-        output_shape = [batch_size, HEIGHT // 2, WIDTH // 2, 16]
-        deconv2 = unpool_layer2x2_batch(deconv1, tf.argmax(deconv1))
+        output_shape = [batch_size, HEIGHT // 2, WIDTH // 2, 32]
         deconv2 = tf.nn.conv2d_transpose(deconv1,
                                          weights['wdc2'],
                                          output_shape=output_shape,
@@ -105,8 +60,7 @@ def multilayer_perceptron(x, weights, biases, use_dropout=False):
     # 3rd deconvolution layer
     with tf.name_scope("deconv3") as scope:
         output_shape = [batch_size, HEIGHT, WIDTH, 1]
-        deconv3 = unpool_layer2x2_batch(deconv2, tf.argmax(deconv2))
-        deconv3 = tf.nn.conv2d_transpose(deconv3,
+        deconv3 = tf.nn.conv2d_transpose(deconv2,
                                          weights['wdc3'],
                                          output_shape=output_shape,
                                          strides=[1, 2, 2, 1],
@@ -126,70 +80,68 @@ def main(argv):
     input = np.asarray(input)
     output = np.asarray(output)
 
-    # input = np.reshape(output, (batch_size, HEIGHT, WIDTH, 3))
-    output = np.reshape(output, (batch_size, HEIGHT, WIDTH, 1))
+    # HEIGHT * WIDTH because y place holder also has HEIGHT * WIDTH
+    output = np.reshape(output, (batch_size, HEIGHT, WIDTH))
 
     # Test value
-    test_x = skimage.io.imread("../../dataset/1.jpg")
-    test_x = np.reshape(test_x, (1, 180, 320, 3))
+    test_x = skimage.io.imread("../../dataset/1.jpg", True)
+    test_x = np.reshape(test_x, (1, 180, 320))
 
-    # TensorFlow placeholders
-    x = tf.placeholder(tf.float32, [None, HEIGHT, WIDTH, 3])
-    y = tf.placeholder(tf.float32, [None, HEIGHT, WIDTH, 1], name="ground_truth")
+    # Tensorflow placeholders
+    x = tf.placeholder(tf.float32, [None, HEIGHT, WIDTH])
+    y = tf.placeholder(tf.float32, [None, HEIGHT, WIDTH], name="ground_truth")
 
     weights = {
         # 5x5 conv, 1 input, 32 outputs
-        'wc1': tf.Variable(tf.random_normal([3, 3, 3, 16])),
+        'wc1': tf.Variable(tf.random_normal([3, 3, 1, 32])),
         # 5x5 conv, 32 inputs, 64 outputs
-        'wc2': tf.Variable(tf.random_normal([3, 3, 16, 32])),
-        'wc3': tf.Variable(tf.random_normal([3, 3, 32, 64])),
-        'wdc1': tf.Variable(tf.random_normal([2, 2, 32, 64])),
-        'wdc2': tf.Variable(tf.random_normal([2, 2, 16, 32])),
-        'wdc3': tf.Variable(tf.random_normal([2, 2, 1, 16])),
+        'wc2': tf.Variable(tf.random_normal([3, 3, 32, 64])),
+        'wc3': tf.Variable(tf.random_normal([3, 3, 64, 128])),
+        'wdc1': tf.Variable(tf.random_normal([2, 2, 64, 128])),
+        'wdc2': tf.Variable(tf.random_normal([2, 2, 32, 64])),
+        'wdc3': tf.Variable(tf.random_normal([2, 2, 1, 32])),
     }
 
     biases = {
-        'bc1': tf.Variable(tf.random_normal([16])),
-        'bc2': tf.Variable(tf.random_normal([32])),
-        'bc3': tf.Variable(tf.random_normal([64])),
-        'bdc1': tf.Variable(tf.random_normal([32])),
-        'bdc2': tf.Variable(tf.random_normal([16])),
+        'bc1': tf.Variable(tf.random_normal([32])),
+        'bc2': tf.Variable(tf.random_normal([64])),
+        'bc3': tf.Variable(tf.random_normal([128])),
+        'bdc1': tf.Variable(tf.random_normal([64])),
+        'bdc2': tf.Variable(tf.random_normal([32])),
         'bdc3': tf.Variable(tf.random_normal([1])),
     }
 
     # Construct model
     pred = multilayer_perceptron(x, weights, biases)
     pred = tf.pack(pred)
-    pred = tf.reshape(pred, [-1, HEIGHT, WIDTH, 1])
+    pred = tf.reshape(pred, [-1, HEIGHT,  WIDTH])
 
     with tf.name_scope("opt") as scope:
-        # loss = tf.reduce_sum(tf.pow((pred - y), 2)) / (2 * batch_size)
-        # optimizer = tf.train.AdamOptimizer(learning_rate=0.005).minimize(cost)
-        loss = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(pred, y))
-        optimizer = tf.train.AdamOptimizer(learning_rate=0.005).minimize(loss)
+        cost = tf.reduce_sum(tf.pow((pred - y), 2)) / (2 * batch_size)
+        optimizer = tf.train.AdamOptimizer(learning_rate=0.01).minimize(cost)
 
     # Evaluate model
     with tf.name_scope("acc") as scope:
         # accuracy is the difference between prediction and ground truth matrices
-        correct_pred = tf.equal(0, tf.cast(tf.sub(loss, y), tf.int32))
+        correct_pred = tf.equal(0, tf.cast(tf.sub(cost, y), tf.int32))
         accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
     # Initializing the variables
-    init = tf.initialize_all_variables()
+    init = tf.global_variables_initializer()
 
     with tf.Session() as sess:
         sess.run(init)
 
         # Initializing summary writer for TensorBoard
-        train_writer = tf.summary.FileWriter('/tmp/log_dir/', sess.graph)
+        train_writer = tf.summary.FileWriter ('/tmp/log_dir/', sess.graph)
 
-        for step in range(100):
+        for step in range(10):
             feed_dict = {x: input, y: output}
-            _, l, acc = sess.run([optimizer, loss, accuracy], feed_dict=feed_dict)
+            _, loss, acc = sess.run([optimizer, cost, accuracy], feed_dict=feed_dict)
 
             if step % 10 == 0:
-                print("Loss at step ", step, ": ", loss)
-                print("Accuracy: ", acc)
+                print("Minibatch loss at step ", step, ": ", cost)
+                print("Minibatch accuracy: ", acc)
 
         print("Done")
 
