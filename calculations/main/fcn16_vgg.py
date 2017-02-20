@@ -14,7 +14,6 @@ VGG_MEAN = [103.939, 116.779, 123.68]
 
 
 class FCN16VGG:
-
     def __init__(self, vgg16_npy_path=None):
         if vgg16_npy_path is None:
             path = sys.modules[self.__class__.__module__].__file__
@@ -34,7 +33,7 @@ class FCN16VGG:
         self.wd = 5e-4
         print("npy file loaded")
 
-    def build(self, rgb, train=False, num_classes=20, random_init_fc8=False,
+    def build(self, rgb, train=False, num_classes=3, random_init_fc8=False,
               debug=False):
         """
         Build the VGG model using loaded weights
@@ -190,7 +189,7 @@ class FCN16VGG:
             # He initialization Sheme
             if name == "score_fr":
                 num_input = in_features
-                stddev = (2 / num_input)**0.5
+                stddev = (2 / num_input) ** 0.5
             elif name == "score_pool4":
                 stddev = 0.001
             # Apply convolution
@@ -228,7 +227,7 @@ class FCN16VGG:
 
             # create
             num_input = ksize * ksize * in_features / stride
-            stddev = (2 / num_input)**0.5
+            stddev = (2 / num_input) ** 0.5
 
             weights = self.get_deconv_filter(f_shape)
             deconv = tf.nn.conv2d_transpose(bottom, weights, output_shape,
@@ -245,7 +244,7 @@ class FCN16VGG:
     def get_deconv_filter(self, f_shape):
         width = f_shape[0]
         heigh = f_shape[0]
-        f = ceil(width/2.0)
+        f = ceil(width / 2.0)
         c = (2 * f - 1 - f % 2) / (2.0 * f)
         bilinear = np.zeros([f_shape[0], f_shape[1]])
         for x in range(width):
@@ -300,12 +299,12 @@ class FCN16VGG:
         """ Build bias weights for filter produces with `_summary_reshape`
 
         """
-        n_averaged_elements = num_orig//num_new
+        n_averaged_elements = num_orig // num_new
         avg_bweight = np.zeros(num_new)
         for i in range(0, num_orig, n_averaged_elements):
             start_idx = i
             end_idx = start_idx + n_averaged_elements
-            avg_idx = start_idx//n_averaged_elements
+            avg_idx = start_idx // n_averaged_elements
             if avg_idx == num_new:
                 break
             avg_bweight[avg_idx] = np.mean(bweight[start_idx:end_idx])
@@ -334,13 +333,13 @@ class FCN16VGG:
         """
         num_orig = shape[3]
         shape[3] = num_new
-        assert(num_new < num_orig)
-        n_averaged_elements = num_orig//num_new
+        assert (num_new < num_orig)
+        n_averaged_elements = num_orig // num_new
         avg_fweight = np.zeros(shape)
         for i in range(0, num_orig, n_averaged_elements):
             start_idx = i
             end_idx = start_idx + n_averaged_elements
-            avg_idx = start_idx//n_averaged_elements
+            avg_idx = start_idx // n_averaged_elements
             if avg_idx == num_new:
                 break
             avg_fweight[:, :, :, avg_idx] = np.mean(
