@@ -18,48 +18,109 @@ logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
 
 from tensorflow.python.framework import ops
 
+
+def loss(logits, labels, num_classes, head=None):
+    """Calculate the loss from the logits and the labels.
+
+    Args:
+      logits: tensor, float - [batch_size, width, height, num_classes].
+          Use vgg_fcn.up as logits.
+      labels: Labels tensor, int32 - [batch_size, width, height, num_classes].
+          The ground truth of your data.
+      head: numpy array - [num_classes]
+          Weighting the loss of each class
+          Optional: Prioritize some classes
+
+    Returns:
+      loss: Loss tensor of type float.
+    """
+    with tf.name_scope('loss'):
+        logits = tf.reshape(logits, (-1, num_classes))
+        epsilon = tf.constant(value=1e-4)
+        logits = logits
+        labels = tf.to_float(tf.reshape(labels, (-1, num_classes)))
+
+        softmax = tf.nn.softmax(logits) + epsilon
+
+        if head is not None:
+            cross_entropy = -tf.reduce_sum(tf.mul(labels * tf.log(softmax),
+                                                  head), reduction_indices=[1])
+        else:
+            cross_entropy = -tf.reduce_sum(
+                labels * tf.log(softmax), reduction_indices=[1])
+
+        cross_entropy_mean = tf.reduce_mean(cross_entropy,
+                                            name='xentropy_mean')
+        tf.add_to_collection('losses', cross_entropy_mean)
+
+        loss = tf.add_n(tf.get_collection('losses'), name='total_loss')
+    return loss
+
+
 img1 = scp.misc.imread("./test_data/1.jpg")
+
+# input_image = tf.placeholder(tf.float32, shape=[None, 180, 320, 3])
+# output_image = tf.placeholder(tf.int32, shape=[None, 180, 320, 1])
+
 input_image = scp.misc.imread("./test_data/1.jpg")
-output_image = scp.misc.imread("./test_data/1_.jpg")
+#output_image = scp.misc.imread("./test_data/1_.jpg", flatten=True)
 
-with tf.Session() as sess:
-    train_mode = tf.placeholder(tf.bool)
-    input_placeholder = tf.placeholder("float")
-    output_placeholder = tf.placeholder("float")
-    batch_images = tf.expand_dims(input_placeholder, 0)
 
-    vgg_fcn = fcn16_vgg.FCN16VGG()
-    with tf.name_scope("content_vgg"):
-        vgg_fcn.build(batch_images, debug=True, num_classes=2)
+input_image = input_image.reshape((1, 180, 320, 3))
+#output_image = output_image.reshape((1, 180, 320, 3)) # sita sutvarkyti ir turetu veikt
 
-    print('Finished building Network.')
 
-    logging.warning("Score weights are initialized random.")
-    logging.warning("Do not expect meaningful results.")
+num_classes = 2
 
-    logging.info("Start Initializing Variabels.")
+output_image = np.ones((1, 180, 320, num_classes))
 
-    init = tf.global_variables_initializer()
-    sess.run(init)
+with tf.device('/cpu:0'):
+    with tf.Session() as sess:
+        images = tf.placeholder("float")
+        batch_images = tf.expand_dims(images, 0)
 
-    print('Running the Network')
-    tensors = [vgg_fcn.pred, vgg_fcn.pred_up]
-    down, up = sess.run(tensors, feed_dict={input_placeholder: img1, train_mode: False})
+        input_placeholder = tf.placeholder("float")
+        input_images = tf.expand_dims(input_placeholder, 0)
 
-    down_color = utils.color_image(down[0])
-    up_color = utils.color_image(up[0])
+        output_placeholder = tf.placeholder("float")
+        output_images = tf.expand_dims(output_placeholder, 0)
 
-    scp.misc.imsave('fcn16_downsampled.png', down_color)
-    scp.misc.imsave('fcn16_upsampled.png', up_color)
+        true_out = tf.placeholder("float")
 
-    print('Training the Network')
-    # simple 1-step training
-    cost = tf.reduce_sum((vgg_fcn.pred_up - output_image) ** 2)
-    cost = tf.cast(cost, tf.float32)
-    optimizer = tf.train.AdamOptimizer(0.0001)
-    gradients = optimizer.compute_gradients(loss=cost)
-    down, up = sess.run(gradients,
-                        feed_dict={input_placeholder: input_image, output_placeholder: output_image, train_mode: True})
+        train_mode = tf.placeholder(tf.bool)
 
-    scp.misc.imsave('fcn16_downsampled_1_step.png', down_color)
-    scp.misc.imsave('fcn16_upsampled_1_step.png', up_color)
+        vgg_fcn = fcn16_vgg.FCN16VGG()
+        with tf.name_scope("content_vgg"):
+            vgg_fcn.build(batch_images, train=True, num_classes=num_classes)
+
+        cost = loss(vgg_fcn.upscore32, output_image, num_classes)
+        train = tf.train.AdamOptimizer(0.0001).minimize(cost)
+
+        print('Finished building Network.')
+
+        logging.warning("Score weights are initialized random.")
+        logging.warning("Do not expect meaningful results.")
+
+        logging.info("Start Initializing Variabels.")
+
+        sess.run(tf.global_variables_initializer())
+
+        print('Running the Network')
+        tensors = [vgg_fcn.pred, vgg_fcn.pred_up]
+        down, up = sess.run(tensors, feed_dict={images: img1})
+
+        down_color = utils.color_image(down[0])
+        up_color = utils.color_image(up[0])
+
+        scp.misc.imsave('fcn16_downsampled.png', down_color)
+        scp.misc.imsave('fcn16_upsampled.png', up_color)
+
+        print('Training the Network')
+        # simple 1-step training
+        down, up = sess.run(train, feed_dict={ images: img1, true_out: output_image})
+
+        down_color = utils.color_image(down[0])
+        up_color = utils.color_image(up[0])
+
+        scp.misc.imsave('fcn16_downsampled_1_step.png', down_color)
+        scp.misc.imsave('fcn16_upsampled_1_step.png', up_color)
