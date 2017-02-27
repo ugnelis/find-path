@@ -12,98 +12,78 @@ import fcn16_vgg
 import loss
 import utils
 
-logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
-                    level=logging.INFO,
-                    stream=sys.stdout)
+RESOURCE = '../dataset'
 
 
+def main(argv):
+    logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
+                        level=logging.INFO,
+                        stream=sys.stdout)
 
-img1 = scp.misc.imread("./test_data/1.jpg")
-img2 = scp.misc.imread("./test_data/2.jpg")
+    dataset = utils.read_files(RESOURCE)
+    input_set, output_set = utils.split_dataset(dataset)
 
-# input_image = tf.placeholder(tf.float32, shape=[None, 180, 320, 3])
-# output_image = tf.placeholder(tf.int32, shape=[None, 180, 320, 1])
+    input_set = input_set[0]
+    output_set = output_set[0]
 
-input_image = scp.misc.imread("./test_data/1.jpg")
-output_image = scp.misc.imread("./test_data/1_.jpg", flatten=True)
+    img1 = scp.misc.imread("./test_data/1.jpg")
+    img2 = scp.misc.imread("./test_data/2.jpg")
 
-# input_image = input_image.reshape((1, 180, 320, 3))
-# output_image = output_image.reshape((1, 180, 320, 3)) # sita sutvarkyti ir turetu veikt
+    input_image = scp.misc.imread("./test_data/1.jpg")
+    output_image = scp.misc.imread("./test_data/1_.jpg", flatten=True)
+
+    num_classes = 3
+
+    with tf.device('/cpu:0'):
+        with tf.Session() as sess:
+
+            input_placeholder = tf.placeholder("float")
+            input_images = tf.expand_dims(input_placeholder, 0)
+
+            output_placeholder = tf.placeholder("float")
+            output_images = tf.expand_dims(output_placeholder, 0)
 
 
-num_classes = 2
+            vgg_fcn = fcn16_vgg.FCN16VGG()
+            with tf.name_scope("content_vgg"):
+                vgg_fcn.build(input_images, train=True, num_classes=num_classes)
 
-output_grounds = np.zeros([180, 320, num_classes])
+            cost = loss.loss(vgg_fcn.upscore32, output_placeholder, num_classes)
+            train = tf.train.AdamOptimizer(0.0001).minimize(cost)
 
-# TODO fix this
-for i in range(180):
-    for j in range(320):
-        if output_image[i, j] == 255:
-            output_grounds[i, j, 0] = 1
+            print('Finished building Network.')
 
-for i in range(180):
-    for j in range(320):
-        if output_image[i, j] == 0:
-            output_grounds[i, j, 1] = 1
+            logging.warning("Score weights are initialized random.")
+            logging.warning("Do not expect meaningful results.")
 
-print(output_grounds.shape)
+            logging.info("Start Initializing Variabels.")
 
-with tf.device('/cpu:0'):
-    with tf.Session() as sess:
-        images = tf.placeholder("float")
-        batch_images = tf.expand_dims(images, 0)
+            sess.run(tf.global_variables_initializer())
 
-        input_placeholder = tf.placeholder("float")
-        input_images = tf.expand_dims(input_placeholder, 0)
+            print('Running the Network')
+            tensors = [vgg_fcn.pred, vgg_fcn.pred_up]
+            down, up = sess.run(tensors, feed_dict={input_placeholder: img1})
 
-        output_placeholder = tf.placeholder("float")
-        output_images = tf.expand_dims(output_placeholder, 0)
 
-        true_out = tf.placeholder("float")
+            down_color = utils.color_image(down[0])
+            up_color = utils.color_image(up[0])
 
-        train_mode = tf.placeholder(tf.bool)
+            scp.misc.imsave('fcn16_downsampled.png', down_color)
+            scp.misc.imsave('fcn16_upsampled.png', up_color)
 
-        vgg_fcn = fcn16_vgg.FCN16VGG()
-        with tf.name_scope("content_vgg"):
-            vgg_fcn.build(batch_images, train=True, num_classes=num_classes)
+            print('Training the Network')
+            for i in range(10):
+                sess.run(train, feed_dict={input_placeholder: input_set, output_placeholder: output_set})
 
-        cost = loss.loss(vgg_fcn.upscore32, true_out, num_classes)
-        train = tf.train.AdamOptimizer(0.0001).minimize(cost)
+            tensors = [vgg_fcn.pred, vgg_fcn.pred_up]
+            down, up = sess.run(tensors, feed_dict={input_placeholder: img2})
+            down_color = utils.color_image(down[0], num_classes)
+            up_color = utils.color_image(up[0], num_classes)
 
-        print('Finished building Network.')
+            scp.misc.imsave('fcn16_downsampled_50_step.png', down_color)
+            scp.misc.imsave('fcn16_upsampled_50_step.png', up_color)
 
-        logging.warning("Score weights are initialized random.")
-        logging.warning("Do not expect meaningful results.")
 
-        logging.info("Start Initializing Variabels.")
+if __name__ == '__main__':
+    tf.app.run()
 
-        sess.run(tf.global_variables_initializer())
-
-        print('Running the Network')
-        tensors = [vgg_fcn.pred, vgg_fcn.pred_up]
-        down, up = sess.run(tensors, feed_dict={images: img1})
-
-        # print(vgg_fcn.upscore32.eval())
-        # print (vgg_fcn.upscore32.eval())
-
-        down_color = utils.color_image(down[0])
-        up_color = utils.color_image(up[0])
-
-        scp.misc.imsave('fcn16_downsampled.png', down_color)
-        scp.misc.imsave('fcn16_upsampled.png', up_color)
-
-        if output_grounds is None:
-            print ("No values in personList")
-
-        print('Training the Network')
-        for i in range(15):
-            # simple 1-step training
-            sess.run(train, feed_dict={images: img1, true_out: output_grounds})
-
-        tensors = [vgg_fcn.pred, vgg_fcn.pred_up]
-        down, up = sess.run(tensors, feed_dict={images: img2})
-        down_color = utils.color_image(down[0])
-        up_color = utils.color_image(up[0])
-
-        scp.misc.imsave('fcn16_downsampled_50_step.png', down_color)
-        scp.misc.imsave('fcn16_upsampled_50_step.png', up_color)
