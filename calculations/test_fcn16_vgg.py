@@ -23,23 +23,36 @@ input_set, output_set = utils.split_dataset(dataset)
 
 test_image = input_set[-1]
 
-input_set = input_set[:2]
-output_set = output_set[:2]
-
+height = input_set.shape[1]
+width = input_set.shape[2]
 num_classes = 3
+
+epochs = 2
 num_steps = 10
+batch_size = 2
+
+
+def result(sess):
+    tensors = [vgg_fcn.pred, vgg_fcn.pred_up]
+    down, up = sess.run(tensors, feed_dict={input_placeholder: [test_image]})
+    down_color = utils.color_image(down[0], num_classes)
+    up_color = utils.color_image(up[0], num_classes)
+
+    scp.misc.imsave('fcn16_downsampled.png', down_color)
+    scp.misc.imsave('fcn16_upsampled.png', up_color)
+
 
 with tf.device('/cpu:0'):
     with tf.Session() as sess:
-        input_placeholder = tf.placeholder(tf.float32, [None, 180, 320, 3])
-        output_placeholder = tf.placeholder(tf.float32, [None, 180, 320, 3])
+        input_placeholder = tf.placeholder(tf.float32, [None, height, width, num_classes])
+        output_placeholder = tf.placeholder(tf.float32, [None, height, width, num_classes])
 
         vgg_fcn = fcn16_vgg.FCN16VGG()
         with tf.name_scope("content_vgg"):
             vgg_fcn.build(input_placeholder, train=True, num_classes=num_classes)
 
-        cost = loss.loss(vgg_fcn.upscore32, output_placeholder, num_classes)
-        train = tf.train.AdamOptimizer(0.0001).minimize(cost)
+        loss = loss.loss(vgg_fcn.upscore32, output_placeholder, num_classes)
+        optimizer = tf.train.AdamOptimizer(0.0001).minimize(loss)
 
         print('Finished building Network.')
 
@@ -51,25 +64,16 @@ with tf.device('/cpu:0'):
         sess.run(tf.global_variables_initializer())
 
         print('Running the Network')
-        tensors = [vgg_fcn.pred, vgg_fcn.pred_up]
-        down, up = sess.run(tensors, feed_dict={input_placeholder: [test_image]})
-
-        down_color = utils.color_image(down[0])
-        up_color = utils.color_image(up[0])
-
-        scp.misc.imsave('fcn16_downsampled.png', down_color)
-        scp.misc.imsave('fcn16_upsampled.png', up_color)
-
         print('Training the Network')
-        for i in range(10):
-            print('Step: ' + str(i))
-            sess.run(train, feed_dict={input_placeholder: input_set, output_placeholder: output_set})
+        for step in range(num_steps):
+            offset = (step * batch_size) % (input_set.shape[0] - batch_size)
+            batch_input = input_set[offset:(offset + batch_size), :]
+            batch_output = output_set[offset:(offset + batch_size), :]
 
-        print('Result')
-        tensors = [vgg_fcn.pred, vgg_fcn.pred_up]
-        down, up = sess.run(tensors, feed_dict={input_placeholder: [test_image]})
-        down_color = utils.color_image(down[0], num_classes)
-        up_color = utils.color_image(up[0], num_classes)
+            _, l,  = sess.run([optimizer, loss], feed_dict={input_placeholder: batch_input, output_placeholder: batch_output})
+            if step % 2 == 0:
+                print("Minibatch loss at step %d: %f" % (step, l))
+                # TODO make prediction output at step.
 
-        scp.misc.imsave('fcn16_downsampled_' + str(num_steps) + '_step.png', down_color)
-        scp.misc.imsave('fcn16_upsampled_' + str(num_steps) + '_step.png', up_color)
+        result(sess)
+
