@@ -6,6 +6,7 @@ import cv2
 import scipy as scp
 import scipy.misc
 from PIL import Image, ImageDraw
+import tensorflow as tf
 
 ROUTE_COLOR = (0, 0, 0)
 OBSTACLE_COLOR = (128, 0, 128)
@@ -15,6 +16,20 @@ INPUT = 'input'
 OUTPUT = 'output'
 
 CLASSES = ['boundary', 'route', 'obstacle']
+
+
+def activation_summary(x):
+    """Helper to create summaries for activations.
+
+    Creates a summary that provides a histogram of activations.
+    Creates a summary that measures the sparsity of activations.
+
+    Args:
+        x: tensor.
+    """
+    tensor_name = x.op.name
+    tf.summary.histogram(tensor_name + '/activations', x)
+    tf.summary.scalar(tensor_name + '/sparsity', tf.nn.zero_fraction(x))
 
 
 def read_files(dir):

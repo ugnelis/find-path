@@ -10,6 +10,9 @@ import sys
 import numpy as np
 import tensorflow as tf
 
+import utils
+
+# VGG mean for standardisation (BGR).
 VGG_MEAN = [103.939, 116.779, 123.68]
 
 
@@ -24,9 +27,7 @@ class FCN16VGG:
             vgg16_npy_path = path
             logging.info("Load npy file from '%s'.", vgg16_npy_path)
         if not os.path.isfile(vgg16_npy_path):
-            logging.error(("File '%s' not found. Download it from "
-                           "https://dl.dropboxusercontent.com/u/"
-                           "50333326/vgg16.npy"), vgg16_npy_path)
+            logging.error("File '%s' not found.", vgg16_npy_path)
             sys.exit(1)
 
         self.data_dict = np.load(vgg16_npy_path, encoding='latin1').item()
@@ -35,30 +36,27 @@ class FCN16VGG:
 
     def build(self, rgb, train=False, num_classes=3, random_init_fc8=False,
               debug=False):
-        """
-        Build the VGG model using loaded weights
-        Parameters
-        ----------
-        rgb: image batch tensor
-            Image in rgb shap. Scaled to Intervall [0, 255]
-        train: bool
-            Whether to build train or inference graph
-        num_classes: int
-            How many classes should be predicted (by fc8)
-        random_init_fc8 : bool
-            Whether to initialize fc8 layer randomly.
-            Finetuning is required in this case.
-        debug: bool
-            Whether to print additional Debug Information.
-        """
-        # Convert RGB to BGR
+        """Build the VGG model using loaded weights
 
+        Args:
+            rgb: image batch tensor.
+                Image in rgb shape. Scaled to Intervall [0, 255]
+            train: bool.
+                Whether to build train or inference graph.
+            num_classes: int32.
+                How many classes should be predicted (by fc8).
+            random_init_fc8: bool.
+                Whether to initialize fc8 layer randomly.
+                Fine-tuning is required in this case.
+            debug: bool.
+                Whether to print additional Debug Information.
+        """
+
+        # Convert RGB to BGR.
         with tf.name_scope('Processing'):
-            # rgb = tf.image.convert_image_dtype(rgb, tf.float32)
+
             red, green, blue = tf.split(rgb, 3, 3)
-            # assert red.get_shape().as_list()[1:] == [224, 224, 1]
-            # assert green.get_shape().as_list()[1:] == [224, 224, 1]
-            # assert blue.get_shape().as_list()[1:] == [224, 224, 1]
+
             bgr = tf.concat([
                 blue - VGG_MEAN[0],
                 green - VGG_MEAN[1],
@@ -89,7 +87,6 @@ class FCN16VGG:
 
         self.conv5_1 = self._conv_layer(self.pool4, "conv5_1")
         self.conv5_2 = self._conv_layer(self.conv5_1, "conv5_2")
-
         self.conv5_3 = self._conv_layer(self.conv5_2, "conv5_3")
         self.pool5 = self._max_pool(self.conv5_3, 'pool5', debug)
 
@@ -131,6 +128,7 @@ class FCN16VGG:
 
         self.pred_up = tf.argmax(self.upscore32, dimension=3)
 
+    # TODO check code.
     def _max_pool(self, bottom, name, debug):
         pool = tf.nn.max_pool(bottom, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
                               padding='SAME', name=name)
@@ -141,6 +139,7 @@ class FCN16VGG:
                             summarize=4, first_n=1)
         return pool
 
+    # TODO check code.
     def _conv_layer(self, bottom, name):
         with tf.variable_scope(name) as scope:
             filt = self.get_conv_filter(name)
@@ -150,10 +149,11 @@ class FCN16VGG:
             bias = tf.nn.bias_add(conv, conv_biases)
 
             relu = tf.nn.relu(bias)
-            # Add summary to Tensorboard
-            _activation_summary(relu)
+            # Add summary to TensorBoard
+            utils.activation_summary(relu)
             return relu
 
+    # TODO check code.
     def _fc_layer(self, bottom, name, num_classes=None,
                   relu=True, debug=False):
         with tf.variable_scope(name) as scope:
@@ -173,7 +173,7 @@ class FCN16VGG:
 
             if relu:
                 bias = tf.nn.relu(bias)
-            _activation_summary(bias)
+            utils.activation_summary(bias)
 
             if debug:
                 bias = tf.Print(bias, [tf.shape(bias)],
@@ -181,6 +181,7 @@ class FCN16VGG:
                                 summarize=4, first_n=1)
             return bias
 
+    # TODO check code.
     def _score_layer(self, bottom, name, num_classes):
         with tf.variable_scope(name) as scope:
             # get number of input channels
@@ -200,10 +201,11 @@ class FCN16VGG:
             conv_biases = self._bias_variable([num_classes], constant=0.0)
             bias = tf.nn.bias_add(conv, conv_biases)
 
-            _activation_summary(bias)
+            utils.activation_summary(bias)
 
             return bias
 
+    # TODO check code.
     def _upscore_layer(self, bottom, shape,
                        num_classes, name, debug,
                        ksize=4, stride=2):
@@ -238,9 +240,10 @@ class FCN16VGG:
                                   message='Shape of %s' % name,
                                   summarize=4, first_n=1)
 
-        _activation_summary(deconv)
+        utils.activation_summary(deconv)
         return deconv
 
+    # TODO check code.
     def get_deconv_filter(self, f_shape):
         width = f_shape[0]
         heigh = f_shape[0]
@@ -260,6 +263,7 @@ class FCN16VGG:
         return tf.get_variable(name="up_filter", initializer=init,
                                shape=weights.shape)
 
+    # TODO check code.
     def get_conv_filter(self, name):
         init = tf.constant_initializer(value=self.data_dict[name][0],
                                        dtype=tf.float32)
@@ -273,17 +277,21 @@ class FCN16VGG:
             tf.add_to_collection('losses', weight_decay)
         return var
 
+    # TODO check code.
     def get_bias(self, name, num_classes=None):
-        bias_wights = self.data_dict[name][1]
+        bias_weights = self.data_dict[name][1]
         shape = self.data_dict[name][1].shape
+
         if name == 'fc8':
-            bias_wights = self._bias_reshape(bias_wights, shape[0],
-                                             num_classes)
+            bias_weights = self._bias_reshape(bias_weights,
+                                              shape[0],
+                                              num_classes)
             shape = [num_classes]
-        init = tf.constant_initializer(value=bias_wights,
+        init = tf.constant_initializer(value=bias_weights,
                                        dtype=tf.float32)
         return tf.get_variable(name="biases", initializer=init, shape=shape)
 
+    # TODO check code.
     def get_fc_weight(self, name):
         init = tf.constant_initializer(value=self.data_dict[name][0],
                                        dtype=tf.float32)
@@ -295,58 +303,77 @@ class FCN16VGG:
             tf.add_to_collection('losses', weight_decay)
         return var
 
-    def _bias_reshape(self, bweight, num_orig, num_new):
-        """ Build bias weights for filter produces with `_summary_reshape`
+    def _bias_reshape(self, bias_weights, num_origin_classes, num_new_classes):
+        """Build bias weights for filter results.
 
+        Args:
+            bias_weights: numpy array.
+                Bias weights (by default for 1000 classes).
+            num_origin_classes: int32.
+                The number of origin classes.
+            num_new_classes: int32.
+                The number of new classes.
+
+        Returns:
+            averaged_bias_weights: numpy array.
+                Bias weights for new classes.
         """
-        n_averaged_elements = num_orig // num_new
-        avg_bweight = np.zeros(num_new)
-        for i in range(0, num_orig, n_averaged_elements):
+        n_averaged_elements = num_origin_classes // num_new_classes
+        averaged_bias_weights = np.zeros(num_new_classes)
+
+        for i in range(0, num_origin_classes, n_averaged_elements):
             start_idx = i
             end_idx = start_idx + n_averaged_elements
-            avg_idx = start_idx // n_averaged_elements
-            if avg_idx == num_new:
+            averaged_idx = start_idx // n_averaged_elements
+            if averaged_idx == num_new_classes:
                 break
-            avg_bweight[avg_idx] = np.mean(bweight[start_idx:end_idx])
-        return avg_bweight
+            averaged_bias_weights[averaged_idx] = np.mean(bias_weights[start_idx:end_idx])
+        return averaged_bias_weights
 
-    def _summary_reshape(self, fweight, shape, num_new):
-        """ Produce weights for a reduced fully-connected layer.
+    def _summary_reshape(self, fcn_weights, shape, num_new_classes):
+        """Produce weights for a reduced fully-connected layer.
 
         FC8 of VGG produces 1000 classes. Most semantic segmentation
         task require much less classes. This reshapes the original weights
-        to be used in a fully-convolutional layer which produces num_new
-        classes. To archive this the average (mean) of n adjanced classes is
-        taken.
+        which are used in a fully-convolutional layer and produces num_new
+        classes. To give the average (mean) for new array of the new classes.
 
-        Consider reordering fweight, to perserve semantic meaning of the
+        Consider reordering fcn_weights, to preserve semantic meaning of the
         weights.
 
         Args:
-          fweight: original weights
-          shape: shape of the desired fully-convolutional layer
-          num_new: number of new classes
-
+            fcn_weights: numpy array.
+                Original FCN weights (by default for 1000 classes).
+            shape: numpy array
+                The shape of the desired FCN layer.
+            num_new_classes: int32.
+                The number of new classes.
 
         Returns:
-          Filter weights for `num_new` classes.
+            averaged_fcn_weights: numpy array.
+                Filter weights for new classes.
         """
-        num_orig = shape[3]
-        shape[3] = num_new
-        assert (num_new < num_orig)
-        n_averaged_elements = num_orig // num_new
-        avg_fweight = np.zeros(shape)
-        for i in range(0, num_orig, n_averaged_elements):
+        num_origin_classes = shape[3]
+
+        # [:, :, origin (] => [:, :, num_new]
+        shape[3] = num_new_classes
+
+        assert (num_new_classes < num_origin_classes)
+        n_averaged_elements = num_origin_classes // num_new_classes
+        averaged_fcn_weights = np.zeros(shape)
+
+        # TODO optimise this for statement.
+        for i in range(0, num_origin_classes, n_averaged_elements):
             start_idx = i
             end_idx = start_idx + n_averaged_elements
-            avg_idx = start_idx // n_averaged_elements
-            if avg_idx == num_new:
+            averaged_idx = start_idx // n_averaged_elements
+            if averaged_idx == num_new_classes:
                 break
-            avg_fweight[:, :, :, avg_idx] = np.mean(
-                fweight[:, :, :, start_idx:end_idx], axis=3)
-        return avg_fweight
+            averaged_fcn_weights[:, :, :, averaged_idx] = np.mean(
+                fcn_weights[:, :, :, start_idx:end_idx], axis=3)
+        return averaged_fcn_weights
 
-    def _variable_with_weight_decay(self, shape, stddev, wd):
+    def _variable_with_weight_decay(self, shape, stddev, weight_decay):
         """Helper to create an initialized Variable with weight decay.
 
         Note that the Variable is initialized with a truncated normal
@@ -354,58 +381,46 @@ class FCN16VGG:
         A weight decay is added only if one is specified.
 
         Args:
-          name: name of the variable
-          shape: list of ints
-          stddev: standard deviation of a truncated Gaussian
-          wd: add L2Loss weight decay multiplied by this float. If None, weight
-              decay is not added for this Variable.
+            shape: list, int32.
+            stddev: float32.
+                standard deviation of a truncated Gaussian.
+            weight_decay: tensor, float32.
+                Result of addition of L2Loss weight decay multiplied by this float. If None, weight
+                decay is not added for this Variable.
 
         Returns:
-          Variable Tensor
+             weights: variable tensor.
         """
 
         initializer = tf.truncated_normal_initializer(stddev=stddev)
-        var = tf.get_variable('weights', shape=shape,
-                              initializer=initializer)
+        weights = tf.get_variable('weights',
+                                  shape=shape,
+                                  initializer=initializer)
 
-        if wd and (not tf.get_variable_scope().reuse):
+        if weight_decay and (not tf.get_variable_scope().reuse):
             weight_decay = tf.multiply(
-                tf.nn.l2_loss(var), wd, name='weight_loss')
+                tf.nn.l2_loss(weights), weight_decay, name='weight_loss')
             tf.add_to_collection('losses', weight_decay)
-        return var
+
+        return weights
 
     def _bias_variable(self, shape, constant=0.0):
         initializer = tf.constant_initializer(constant)
         return tf.get_variable(name='biases', shape=shape,
                                initializer=initializer)
 
+    # TODO check code.
     def get_fc_weight_reshape(self, name, shape, num_classes=None):
         print('Layer name: %s' % name)
         print('Layer shape: %s' % shape)
         weights = self.data_dict[name][0]
         weights = weights.reshape(shape)
+
         if num_classes is not None:
             weights = self._summary_reshape(weights, shape,
-                                            num_new=num_classes)
+                                            num_new_classes=num_classes)
+
         init = tf.constant_initializer(value=weights,
                                        dtype=tf.float32)
+
         return tf.get_variable(name="weights", initializer=init, shape=shape)
-
-
-def _activation_summary(x):
-    """Helper to create summaries for activations.
-
-    Creates a summary that provides a histogram of activations.
-    Creates a summary that measure the sparsity of activations.
-
-    Args:
-      x: Tensor
-    Returns:
-      nothing
-    """
-    # Remove 'tower_[0-9]/' from the name in case this is a multi-GPU training
-    # session. This helps the clarity of presentation on tensorboard.
-    tensor_name = x.op.name
-    # tensor_name = re.sub('%s_[0-9]*/' % TOWER_NAME, '', x.op.name)
-    tf.summary.histogram(tensor_name + '/activations', x)
-    tf.summary.scalar(tensor_name + '/sparsity', tf.nn.zero_fraction(x))

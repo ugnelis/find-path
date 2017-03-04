@@ -37,7 +37,7 @@ def loss(logits, labels, num_classes, head=None):
 
         if head is not None:
             cross_entropy = -tf.reduce_sum(tf.mul(labels * tf.log(softmax),
-                                           head), reduction_indices=[1])
+                                                  head), reduction_indices=[1])
         else:
             cross_entropy = -tf.reduce_sum(
                 labels * tf.log(softmax), reduction_indices=[1])

@@ -32,6 +32,15 @@ num_steps = 10
 batch_size = 2
 
 
+# TODO model graph saving.
+# TODO prediction output at step.
+# TODO VGG19 possibility.
+# TODO TensorFlow scopes.
+# TODO code for TensorBoard.
+# TODO finish to comment fcn16_vgg.py.
+# TODO debug fcn16_vgg.py variables flow.
+
+
 def result(sess):
     tensors = [vgg_fcn.pred, vgg_fcn.pred_up]
     down, up = sess.run(tensors, feed_dict={input_placeholder: [test_image]})
@@ -70,10 +79,10 @@ with tf.device('/cpu:0'):
             batch_input = input_set[offset:(offset + batch_size), :]
             batch_output = output_set[offset:(offset + batch_size), :]
 
-            _, l,  = sess.run([optimizer, loss], feed_dict={input_placeholder: batch_input, output_placeholder: batch_output})
+            _, l = sess.run([optimizer, loss],
+                            feed_dict={input_placeholder: batch_input, output_placeholder: batch_output})
             if step % 2 == 0:
                 print("Minibatch loss at step %d: %f" % (step, l))
                 # TODO make prediction output at step.
 
         result(sess)
-
