@@ -16,16 +16,17 @@ def loss(logits, labels, num_classes, head=None):
     """Calculate the loss from the logits and the labels.
 
     Args:
-      logits: tensor, float - [batch_size, width, height, num_classes].
-          Use vgg_fcn.up as logits.
-      labels: Labels tensor, int32 - [batch_size, width, height, num_classes].
-          The ground truth of your data.
-      head: numpy array - [num_classes]
-          Weighting the loss of each class
-          Optional: Prioritize some classes
-
+        logits: tensor, float32 - [batch_size, width, height, num_classes].
+            Use vgg_fcn.upscore32 as logits.
+        labels: tensor, int32 - [batch_size, width, height, num_classes].
+            The ground truth of the data.
+        num_classes:
+        head: numpy array - [num_classes]
+            Weighting the loss of each class
+            Optional: Prioritize some classes
     Returns:
-      loss: Loss tensor of type float.
+        loss: tensor, float32.
+            Loss result.
     """
     with tf.name_scope('loss'):
         logits = tf.reshape(logits, (-1, num_classes))

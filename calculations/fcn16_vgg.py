@@ -128,9 +128,20 @@ class FCN16VGG:
 
         self.pred_up = tf.argmax(self.upscore32, dimension=3)
 
-    # TODO check code.
-    def _max_pool(self, bottom, name, debug):
-        pool = tf.nn.max_pool(bottom, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
+    def _max_pool(self, input, name, debug):
+        """Perform the max pooling on the input.
+
+        Args:
+            input: tensor, float32.
+            name: string.
+                Name of the layer.
+            debug: bool.
+                Whether to print additional Debug Information.
+
+        Returns:
+            pool: tensor, float32.
+        """
+        pool = tf.nn.max_pool(input, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
                               padding='SAME', name=name)
 
         if debug:
@@ -139,40 +150,75 @@ class FCN16VGG:
                             summarize=4, first_n=1)
         return pool
 
-    # TODO check code.
-    def _conv_layer(self, bottom, name):
-        with tf.variable_scope(name) as scope:
-            filt = self.get_conv_filter(name)
-            conv = tf.nn.conv2d(bottom, filt, [1, 1, 1, 1], padding='SAME')
+    def _conv_layer(self, input, name, debug):
+        """Compute convolution given and filter tensors.
 
-            conv_biases = self.get_bias(name)
+        Args:
+            input: tensor, float32.
+            name: string.
+                Name of the layer.
+            debug: bool.
+                Whether to print additional Debug Information.
+
+        Returns:
+            relu: tensor, float32.
+        """
+        with tf.variable_scope(name):
+            filter = self._get_conv_filter(name)
+            conv = tf.nn.conv2d(input, filter, [1, 1, 1, 1], padding='SAME')
+
+            conv_biases = self._get_bias(name)
             bias = tf.nn.bias_add(conv, conv_biases)
 
             relu = tf.nn.relu(bias)
-            # Add summary to TensorBoard
+
+            # Add summary to TensorBoard.
             utils.activation_summary(relu)
+
+            if debug:
+                relu = tf.Print(bias, [tf.shape(relu)],
+                                message='Shape of %s' % name,
+                                summarize=4, first_n=1)
+
             return relu
 
-    # TODO check code.
-    def _fc_layer(self, bottom, name, num_classes=None,
+    def _fc_layer(self, input, name, num_classes=None,
                   relu=True, debug=False):
-        with tf.variable_scope(name) as scope:
-            shape = bottom.get_shape().as_list()
+        """Computes fully-connected given and filter tensors.
+
+        Args:
+            input: tensor, float32.
+            name: string.
+                Name of the layer.
+            num_classes: int32.
+                How many classes should be predicted.
+            relu: bool.
+                Whether to computes rectified linear.
+            debug: bool.
+                Whether to print additional Debug Information.
+
+        Returns:
+            bias: tensor, float32.
+        """
+        with tf.variable_scope(name):
 
             if name == 'fc6':
-                filt = self.get_fc_weight_reshape(name, [7, 7, 512, 4096])
+                filter = self._get_fc_weight_reshape(name, [7, 7, 512, 4096])
             elif name == 'score_fr':
-                name = 'fc8'  # Name of score_fr layer in VGG Model
-                filt = self.get_fc_weight_reshape(name, [1, 1, 4096, 1000],
-                                                  num_classes=num_classes)
+                name = 'fc8'  # Name of score_fr layer in VGG model.
+                filter = self._get_fc_weight_reshape(name, [1, 1, 4096, 1000],
+                                                     num_classes=num_classes)
             else:
-                filt = self.get_fc_weight_reshape(name, [1, 1, 4096, 4096])
-            conv = tf.nn.conv2d(bottom, filt, [1, 1, 1, 1], padding='SAME')
-            conv_biases = self.get_bias(name, num_classes=num_classes)
+                filter = self._get_fc_weight_reshape(name, [1, 1, 4096, 4096])
+
+            conv = tf.nn.conv2d(input, filter, [1, 1, 1, 1], padding='SAME')
+            conv_biases = self._get_bias(name, num_classes=num_classes)
             bias = tf.nn.bias_add(conv, conv_biases)
 
             if relu:
                 bias = tf.nn.relu(bias)
+
+            # Add summary to TensorBoard.
             utils.activation_summary(bias)
 
             if debug:
@@ -181,27 +227,47 @@ class FCN16VGG:
                                 summarize=4, first_n=1)
             return bias
 
-    # TODO check code.
-    def _score_layer(self, bottom, name, num_classes):
-        with tf.variable_scope(name) as scope:
-            # get number of input channels
-            in_features = bottom.get_shape()[3].value
+    def _score_layer(self, input, name, num_classes, debug):
+        """Get clasification scores.
+
+        Args:
+            input: tensor, float32.
+            name: string.
+                Name of the layer.
+            num_classes: int32.
+                How many classes should be predicted.
+
+        Returns:
+            tensor, float32.
+        """
+        with tf.variable_scope(name):
+            # Get number of input channels.
+            in_features = input.get_shape()[3].value
             shape = [1, 1, in_features, num_classes]
-            # He initialization Sheme
+
+            # He initialization.
             if name == "score_fr":
                 num_input = in_features
                 stddev = (2 / num_input) ** 0.5
             elif name == "score_pool4":
                 stddev = 0.001
-            # Apply convolution
+
+            # Apply convolution.
             w_decay = self.wd
             weights = self._variable_with_weight_decay(shape, stddev, w_decay)
-            conv = tf.nn.conv2d(bottom, weights, [1, 1, 1, 1], padding='SAME')
-            # Apply bias
+            conv = tf.nn.conv2d(input, weights, [1, 1, 1, 1], padding='SAME')
+
+            # Apply bias.
             conv_biases = self._bias_variable([num_classes], constant=0.0)
             bias = tf.nn.bias_add(conv, conv_biases)
 
+            # Add summary to TensorBoard.
             utils.activation_summary(bias)
+
+            if debug:
+                bias = tf.Print(bias, [tf.shape(bias)],
+                                message='Shape of %s' % name,
+                                summarize=4, first_n=1)
 
             return bias
 
@@ -264,21 +330,24 @@ class FCN16VGG:
                                shape=weights.shape)
 
     # TODO check code.
-    def get_conv_filter(self, name):
+    def _get_conv_filter(self, name):
         init = tf.constant_initializer(value=self.data_dict[name][0],
                                        dtype=tf.float32)
         shape = self.data_dict[name][0].shape
+
         print('Layer name: %s' % name)
         print('Layer shape: %s' % str(shape))
-        var = tf.get_variable(name="filter", initializer=init, shape=shape)
+
+        filter = tf.get_variable(name="filter", initializer=init, shape=shape)
+
         if not tf.get_variable_scope().reuse:
-            weight_decay = tf.multiply(tf.nn.l2_loss(var), self.wd,
+            weight_decay = tf.multiply(tf.nn.l2_loss(filter), self.wd,
                                        name='weight_loss')
             tf.add_to_collection('losses', weight_decay)
-        return var
+        return filter
 
     # TODO check code.
-    def get_bias(self, name, num_classes=None):
+    def _get_bias(self, name, num_classes=None):
         bias_weights = self.data_dict[name][1]
         shape = self.data_dict[name][1].shape
 
@@ -292,18 +361,21 @@ class FCN16VGG:
         return tf.get_variable(name="biases", initializer=init, shape=shape)
 
     # TODO check code.
-    def get_fc_weight(self, name):
+    def _get_fc_weight(self, name):
         init = tf.constant_initializer(value=self.data_dict[name][0],
                                        dtype=tf.float32)
         shape = self.data_dict[name][0].shape
         var = tf.get_variable(name="weights", initializer=init, shape=shape)
+
         if not tf.get_variable_scope().reuse:
             weight_decay = tf.multiply(tf.nn.l2_loss(var), self.wd,
                                        name='weight_loss')
             tf.add_to_collection('losses', weight_decay)
+
         return var
 
-    def _bias_reshape(self, bias_weights, num_origin_classes, num_new_classes):
+    @staticmethod
+    def _bias_reshape(bias_weights, num_origin_classes, num_new_classes):
         """Build bias weights for filter results.
 
         Args:
@@ -330,50 +402,8 @@ class FCN16VGG:
             averaged_bias_weights[averaged_idx] = np.mean(bias_weights[start_idx:end_idx])
         return averaged_bias_weights
 
-    def _summary_reshape(self, fcn_weights, shape, num_new_classes):
-        """Produce weights for a reduced fully-connected layer.
-
-        FC8 of VGG produces 1000 classes. Most semantic segmentation
-        task require much less classes. This reshapes the original weights
-        which are used in a fully-convolutional layer and produces num_new
-        classes. To give the average (mean) for new array of the new classes.
-
-        Consider reordering fcn_weights, to preserve semantic meaning of the
-        weights.
-
-        Args:
-            fcn_weights: numpy array.
-                Original FCN weights (by default for 1000 classes).
-            shape: numpy array
-                The shape of the desired FCN layer.
-            num_new_classes: int32.
-                The number of new classes.
-
-        Returns:
-            averaged_fcn_weights: numpy array.
-                Filter weights for new classes.
-        """
-        num_origin_classes = shape[3]
-
-        # [:, :, origin (] => [:, :, num_new]
-        shape[3] = num_new_classes
-
-        assert (num_new_classes < num_origin_classes)
-        n_averaged_elements = num_origin_classes // num_new_classes
-        averaged_fcn_weights = np.zeros(shape)
-
-        # TODO optimise this for statement.
-        for i in range(0, num_origin_classes, n_averaged_elements):
-            start_idx = i
-            end_idx = start_idx + n_averaged_elements
-            averaged_idx = start_idx // n_averaged_elements
-            if averaged_idx == num_new_classes:
-                break
-            averaged_fcn_weights[:, :, :, averaged_idx] = np.mean(
-                fcn_weights[:, :, :, start_idx:end_idx], axis=3)
-        return averaged_fcn_weights
-
-    def _variable_with_weight_decay(self, shape, stddev, weight_decay):
+    @staticmethod
+    def _variable_with_weight_decay(shape, stddev, weight_decay):
         """Helper to create an initialized Variable with weight decay.
 
         Note that the Variable is initialized with a truncated normal
@@ -409,18 +439,74 @@ class FCN16VGG:
         return tf.get_variable(name='biases', shape=shape,
                                initializer=initializer)
 
-    # TODO check code.
-    def get_fc_weight_reshape(self, name, shape, num_classes=None):
+    def _get_fc_weight_reshape(self, name, shape, num_classes=None):
+        """GET fully-connected layer reshaped (from default).
+
+        Args:
+            name: string.
+                Name of the layer.
+            shape: numpy array
+                The shape of the desired layer.
+            num_classes: int32.
+                How many classes should be predicted.
+
+        Returns:
+            variable tensor.
+        """
         print('Layer name: %s' % name)
         print('Layer shape: %s' % shape)
         weights = self.data_dict[name][0]
         weights = weights.reshape(shape)
 
         if num_classes is not None:
-            weights = self._summary_reshape(weights, shape,
-                                            num_new_classes=num_classes)
+            weights = _summary_reshape(weights, shape,
+                                       num_new_classes=num_classes)
 
         init = tf.constant_initializer(value=weights,
                                        dtype=tf.float32)
 
         return tf.get_variable(name="weights", initializer=init, shape=shape)
+
+
+def _summary_reshape(self, fcn_weights, shape, num_new_classes):
+    """Produce weights for a reduced fully-connected layer.
+
+    FC8 of VGG produces 1000 classes. Most semantic segmentation
+    task require much less classes. This reshapes the original weights
+    which are used in a fully-convolutional layer and produces num_new
+    classes. To give the average (mean) for new array of the new classes.
+
+    Consider reordering fcn_weights, to preserve semantic meaning of the
+    weights.
+
+    Args:
+        fcn_weights: numpy array.
+            Original FCN weights (by default for 1000 classes).
+        shape: numpy array
+            The shape of the desired layer.
+        num_new_classes: int32.
+            The number of new classes.
+
+    Returns:
+        averaged_fcn_weights: numpy array.
+            Filter weights for new classes.
+    """
+    num_origin_classes = shape[3]
+
+    # [:, :, origin (] => [:, :, num_new]
+    shape[3] = num_new_classes
+
+    assert (num_new_classes < num_origin_classes)
+    n_averaged_elements = num_origin_classes // num_new_classes
+    averaged_fcn_weights = np.zeros(shape)
+
+    # TODO optimise this for statement.
+    for i in range(0, num_origin_classes, n_averaged_elements):
+        start_idx = i
+        end_idx = start_idx + n_averaged_elements
+        averaged_idx = start_idx // n_averaged_elements
+        if averaged_idx == num_new_classes:
+            break
+        averaged_fcn_weights[:, :, :, averaged_idx] = np.mean(
+            fcn_weights[:, :, :, start_idx:end_idx], axis=3)
+    return averaged_fcn_weights
