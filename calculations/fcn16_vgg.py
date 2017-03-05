@@ -49,7 +49,7 @@ class FCN16VGG:
                 Whether to initialize fc8 layer randomly.
                 Fine-tuning is required in this case.
             debug: bool.
-                Whether to print additional Debug Information.
+                Whether to print additional debug information.
         """
 
         # Convert RGB to BGR.
@@ -136,7 +136,7 @@ class FCN16VGG:
             name: string.
                 Name of the layer.
             debug: bool.
-                Whether to print additional Debug Information.
+                Whether to print additional debug information.
 
         Returns:
             pool: tensor, float32.
@@ -150,7 +150,7 @@ class FCN16VGG:
                             summarize=4, first_n=1)
         return pool
 
-    def _conv_layer(self, input, name, debug):
+    def _conv_layer(self, input, name, debug=False):
         """Compute convolution given and filter tensors.
 
         Args:
@@ -158,7 +158,7 @@ class FCN16VGG:
             name: string.
                 Name of the layer.
             debug: bool.
-                Whether to print additional Debug Information.
+                Whether to print additional debug information.
 
         Returns:
             relu: tensor, float32.
@@ -195,7 +195,7 @@ class FCN16VGG:
             relu: bool.
                 Whether to computes rectified linear.
             debug: bool.
-                Whether to print additional Debug Information.
+                Whether to print additional debug information.
 
         Returns:
             bias: tensor, float32.
@@ -228,7 +228,7 @@ class FCN16VGG:
             return bias
 
     def _score_layer(self, input, name, num_classes, debug):
-        """Get clasification scores.
+        """Get classification scores.
 
         Args:
             input: tensor, float32.
@@ -271,61 +271,89 @@ class FCN16VGG:
 
             return bias
 
-    # TODO check code.
-    def _upscore_layer(self, bottom, shape,
+    def _upscore_layer(self, input, shape,
                        num_classes, name, debug,
                        ksize=4, stride=2):
+        """Upsample layer.
+
+        Args:
+            input: tensor, float32.
+            shape: numpy array
+                The shape of the desired layer.
+            num_classes: int32.
+                How many classes should be predicted.
+            name: string.
+                Name of the layer.
+            debug: bool.
+                Whether to print additional debug information.
+            ksize: int32.
+            stride: int32.
+        Returns:
+            deconv: tensor, float32.
+                Upsampled layer.
+        """
         strides = [1, stride, stride, 1]
         with tf.variable_scope(name):
-            in_features = bottom.get_shape()[3].value
+            in_features = input.get_shape()[3].value
 
+            # Compute shape out of input.
             if shape is None:
-                # Compute shape out of Bottom
-                in_shape = tf.shape(bottom)
+                in_shape = tf.shape(input)
 
-                h = ((in_shape[1] - 1) * stride) + 1
-                w = ((in_shape[2] - 1) * stride) + 1
-                new_shape = [in_shape[0], h, w, num_classes]
+                height = ((in_shape[1] - 1) * stride) + 1
+                width = ((in_shape[2] - 1) * stride) + 1
+                new_shape = [in_shape[0], height, width, num_classes]
             else:
                 new_shape = [shape[0], shape[1], shape[2], num_classes]
+
             output_shape = tf.stack(new_shape)
 
             logging.debug("Layer: %s, Fan-in: %d" % (name, in_features))
-            f_shape = [ksize, ksize, num_classes, in_features]
+            filter_shape = [ksize, ksize, num_classes, in_features]
 
-            # create
-            num_input = ksize * ksize * in_features / stride
-            stddev = (2 / num_input) ** 0.5
-
-            weights = self.get_deconv_filter(f_shape)
-            deconv = tf.nn.conv2d_transpose(bottom, weights, output_shape,
+            weights = self._get_deconv_filter(filter_shape)
+            deconv = tf.nn.conv2d_transpose(input, weights, output_shape,
                                             strides=strides, padding='SAME')
+
+            # Add summary to TensorBoard.
+            utils.activation_summary(deconv)
 
             if debug:
                 deconv = tf.Print(deconv, [tf.shape(deconv)],
                                   message='Shape of %s' % name,
                                   summarize=4, first_n=1)
 
-        utils.activation_summary(deconv)
         return deconv
 
-    # TODO check code.
-    def get_deconv_filter(self, f_shape):
-        width = f_shape[0]
-        heigh = f_shape[0]
+    def _get_deconv_filter(self, filter_shape):
+        """Get doconvolutional filter.
+
+        Args:
+            filter_shape: list, int32.
+        Returns:
+            tensor variable.
+                Upsampled deconvolutional filter.
+        """
+        width = filter_shape[0]
+        height = filter_shape[0]
         f = ceil(width / 2.0)
         c = (2 * f - 1 - f % 2) / (2.0 * f)
-        bilinear = np.zeros([f_shape[0], f_shape[1]])
+
+        bilinear = np.zeros([filter_shape[0], filter_shape[1]])
+
         for x in range(width):
-            for y in range(heigh):
+            for y in range(height):
                 value = (1 - abs(x / f - c)) * (1 - abs(y / f - c))
                 bilinear[x, y] = value
-        weights = np.zeros(f_shape)
-        for i in range(f_shape[2]):
+
+        weights = np.zeros(filter_shape)
+
+        for i in range(filter_shape[2]):
             weights[:, :, i, i] = bilinear
 
         init = tf.constant_initializer(value=weights,
                                        dtype=tf.float32)
+
         return tf.get_variable(name="up_filter", initializer=init,
                                shape=weights.shape)
 
