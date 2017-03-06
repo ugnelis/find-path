@@ -4,8 +4,8 @@ var Utility = (function () {
             var circle = new fabric.Circle({
                 left: point.x,
                 top: point.y,
-                strokeWidth: 5,
-                radius: 12,
+                strokeWidth: 2,
+                radius: 8,
                 fill: '',
                 stroke: '#666',
                 selectable: false

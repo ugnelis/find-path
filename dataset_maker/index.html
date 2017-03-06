@@ -1,50 +1,124 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <link rel="stylesheet" type="text/css" href="styles/styles.css">
-    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <title>Dataset Maker</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <style>
+
+        html, body {
+            margin: 0;
+            height: 100%;
+        }
+
+        .fill {
+            min-height: 100%;
+            height: 100%;
+        }
+
+        .row.content {
+            height: 100%;
+        }
+
+        .sidenav {
+            background-color: #f1f1f1;
+            height: 100%;
+        }
+
+        footer {
+            background-color: #555;
+            color: white;
+            padding: 10px;
+            bottom: 0;
+            width: 100%;
+            height: 40px;
+        }
+
+        /* On small screens, set height to 'auto' for sidenav and grid */
+        @media screen and (max-width: 767px) {
+            .sidenav {
+                height: auto;
+                padding: 15px;
+            }
+
+            .row.content {
+                height: auto;
+            }
+        }
+    </style>
 </head>
 <body>
-<canvas id="canvas" width="100" height="100"></canvas>
 
-<div>
-    <label for="scale">Scale:</label>
-    <input type="range" id="scale" name="scale" min="0" max="10"/>
-    <button onclick="scale()">Scale</button>
+<div class="container-fluid fill">
+    <div class="row content">
+        <div class="col-sm-3 sidenav">
+            <h4>Dataset Maker</h4>
+            <div class="well">
+                <label for="open-image">Open image: </label><input type="file" id="open-image"
+                                                                   onchange="handleImageSelect(this)"
+                                                                   name="files"/>
+                <label for="open-image">Open json: </label><input type="file" id="open-json"
+                                                                  onchange="handleJsonSelect(this)"
+                                                                  name="files"/>
+            </div>
+            <div class="well">
+                <button id="save-file" onclick="handleFileSave()">Save File</button>
+                <label for="file-name">File name: </label><input name="file-name" id="file-name">
+            </div>
+        </div>
+        <br>
+
+        <div class="col-sm-9">
+            <div class="well">
+                <canvas id="canvas" width="100" height="100"></canvas>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <label for="scale">Scale:</label>
+                        <input type="range" id="scale" name="scale" min="0" max="10"/>
+                        <button onclick="scale()">Scale</button>
+                    </div>
+                    <div class="col-sm-3">
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="row">
+                <div class="col-sm-6">
+                    <button id="add" onclick="newPolygon()">New Polygon</button>
+                    <button id="edit" onclick="editData()">Edit</button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <fieldset id="controller-fieldset">
+                        <div>
+                            <div>Type:</div>
+                            <input type="radio" name="type" value="route" id="route" checked/><label
+                                for="route">Route</label><br/>
+                            <input type="radio" name="type" value="boundary" id="boundary"/><label for="boundary">Boundary</label><br/>
+                            <input type="radio" name="type" value="obstacle" id="obstacle"/><label for="obstacle">Obstacle</label><br/>
+                            <button onclick="setData()">Set</button>
+                            <br/>
+                        </div>
+                        <div>
+                            <button id="remove" onclick="removeData()">Remove</button>
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div>
-    <button id="add" onclick="newPolygon()">New Polygon</button>
-    <button id="edit" onclick="editData()">Edit</button>
-</div>
+<footer class="container-fluid">
+    <p>© 2017 Ugnius Malūkas</p>
+</footer>
 
-<fieldset id="controller-fieldset">
-    <div>
-        <div>Type:</div>
-        <input type="radio" name="type" value="route" id="route" checked/><label for="route">Route</label><br/>
-        <input type="radio" name="type" value="boundary" id="boundary"/><label for="boundary">Boundary</label><br/>
-        <input type="radio" name="type" value="obstacle" id="obstacle"/><label for="obstacle">Obstacle</label><br/>
-        <button onclick="setData()">Set</button>
-        <br/>
-    </div>
-    <div>
-        <button id="remove" onclick="removeData()">Remove</button>
-    </div>
-</fieldset>
-
-<fieldset id="file-fieldset">
-    <div>
-        <label for="open-image">Open image: </label><input type="file" id="open-image"
-                                                           onchange="handleImageSelect(this)" name="files"/>
-        <label for="open-image">Open json: </label><input type="file" id="open-json" onchange="handleJsonSelect(this)"
-                                                          name="files"/>
-    </div>
-    <div>
-        <button id="save-file" onclick="handleFileSave()">Save File</button>
-        <label for="file-name">File name: </label><input name="file-name" id="file-name">
-    </div>
-</fieldset>
-
+<script src="bower_components/bootstrap/dist/css/bootstrap.css"></script>
 <script src="bower_components/fabric.js/dist/fabric.js"></script>
 <script src="bower_components/file-saver/FileSaver.js"></script>
 <script src="scripts/utility.js"></script>

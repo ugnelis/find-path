@@ -17,7 +17,6 @@
     var fileNameInput = document.getElementById("file-name");
 
     // Fieldsets
-    var fileFieldset = document.getElementById("file-fieldset");
     var controllerFieldset = document.getElementById("controller-fieldset");
 
     var minScale = 320;
