@@ -8,7 +8,7 @@
   "main": "",
   "private": true,
   "dependencies": {
-    "fabric.js": "fabric#^1.6.6",
+    "fabric.js": "fabric#1.6.6",
     "file-saver": "^1.3.3"
   }
 }

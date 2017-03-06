@@ -2,6 +2,7 @@
 <html>
 <head>
     <link rel="stylesheet" type="text/css" href="styles/styles.css">
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
 </head>
 <body>
 <canvas id="canvas" width="100" height="100"></canvas>
@@ -33,19 +34,10 @@
 
 <fieldset id="file-fieldset">
     <div>
-        <label for="open-image">Open image: </label><input type="file" id="open-image" onchange="handleImageSelect(this)" name="files"/>
-        <label for="open-image">Open json: </label><input type="file" id="open-json" onchange="handleJsonSelect(this)" name="files"/>
-    </div>
-    <label for="alpha">Alpha:</label> <input type="number" step="any" name="alpha" id="alpha"><br>
-    <label for="beta">Beta: </label> <input type="number" step="any" name="beta" id="beta"><br>
-    <div>
-        <div>Class:</div>
-        <input type="radio" name="class" value="beach" id="beach" checked/><label for="beach">Beach</label><br/>
-        <input type="radio" name="class" value="forest" id="forest"/><label for="forest">Forest</label><br/>
-        <input type="radio" name="class" value="indoor" id="indoor"/><label for="indoor">Indoor</label><br/>
-        <input type="radio" name="class" value="park" id="park"/><label for="park">Park</label><br/>
-        <input type="radio" name="class" value="street" id="street"/><label for="street">Street</label><br/>
-        <br/>
+        <label for="open-image">Open image: </label><input type="file" id="open-image"
+                                                           onchange="handleImageSelect(this)" name="files"/>
+        <label for="open-image">Open json: </label><input type="file" id="open-json" onchange="handleJsonSelect(this)"
+                                                          name="files"/>
     </div>
     <div>
         <button id="save-file" onclick="handleFileSave()">Save File</button>
@@ -58,6 +50,7 @@
 <script src="scripts/utility.js"></script>
 <script src="scripts/modes/add_mode.js"></script>
 <script src="scripts/modes/edit_mode.js"></script>
+<script src="scripts/modes/empty_mode.js"></script>
 <script src="scripts/polygon_manager.js"></script>
 <script src="scripts/script.js"></script>
 </body>

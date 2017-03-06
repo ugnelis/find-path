@@ -10,6 +10,7 @@ var PolygonManager = (function () {
 
     function PolygonManager(canvas) {
         this.canvas = canvas;
+        mode = new EmptyMode(this, this.canvas);
 
         this.canvas.on('object:moving', function (event) {
             mode.eventObjectMoving(event);
@@ -35,7 +36,7 @@ var PolygonManager = (function () {
         } else {
             state = '';
             mode.doAfter();
-            mode = null;
+            mode = new EmptyMode(this, this.canvas);
         }
     };
 
@@ -46,7 +47,7 @@ var PolygonManager = (function () {
         } else {
             state = '';
             mode.doAfter();
-            mode = null;
+            mode = new EmptyMode(this, this.canvas);
         }
     };
 

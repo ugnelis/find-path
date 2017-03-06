@@ -13,8 +13,6 @@
     var saveFileButton = document.getElementById('save-file');
 
     // Inputs
-    var alphaInput = document.getElementById("alpha");
-    var betaInput = document.getElementById("beta");
     var scaleInput = document.getElementById("scale");
     var fileNameInput = document.getElementById("file-name");
 
@@ -134,13 +132,8 @@
     }
 
     function handleFileSave() {
-
         var polygons = polygonManager.getPolygons();
         var data = {};
-        data.class = document.querySelector('input[name="class"]:checked').value;
-
-        data.alpha = Number(alphaInput.value);
-        data.beta = Number(betaInput.value);
 
         data.polygons = [];
         for (var i = 0; i < polygons.length; i++) {
@@ -164,9 +157,6 @@
     }
 
     function setParameters(object) {
-        document.getElementById(object.class).checked = true;
-        alphaInput.value = object.alpha;
-        betaInput.value = object.beta;
         console.log(polygonManager.getPolygons());
 
         for (var i = 0; i < object.polygons.length; i++) {
