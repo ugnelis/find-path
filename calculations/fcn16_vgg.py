@@ -227,7 +227,7 @@ class FCN16VGG:
                                 summarize=4, first_n=1)
             return bias
 
-    def _score_layer(self, input, name, num_classes, debug):
+    def _score_layer(self, input, name, num_classes, debug=False):
         """Get classification scores.
 
         Args:
@@ -487,54 +487,52 @@ class FCN16VGG:
         weights = weights.reshape(shape)
 
         if num_classes is not None:
-            weights = _summary_reshape(weights, shape,
-                                       num_new_classes=num_classes)
+            weights = self._summary_reshape(weights, shape, num_classes)
 
         init = tf.constant_initializer(value=weights,
                                        dtype=tf.float32)
 
         return tf.get_variable(name="weights", initializer=init, shape=shape)
 
+    def _summary_reshape(self, fcn_weights, shape, num_new_classes):
+        """Produce weights for a reduced fully-connected layer.
 
-def _summary_reshape(self, fcn_weights, shape, num_new_classes):
-    """Produce weights for a reduced fully-connected layer.
+        FC8 of VGG produces 1000 classes. Most semantic segmentation
+        task require much less classes. This reshapes the original weights
+        which are used in a fully-convolutional layer and produces num_new
+        classes. To give the average (mean) for new array of the new classes.
 
-    FC8 of VGG produces 1000 classes. Most semantic segmentation
-    task require much less classes. This reshapes the original weights
-    which are used in a fully-convolutional layer and produces num_new
-    classes. To give the average (mean) for new array of the new classes.
+        Consider reordering fcn_weights, to preserve semantic meaning of the
+        weights.
 
-    Consider reordering fcn_weights, to preserve semantic meaning of the
-    weights.
+        Args:
+            fcn_weights: numpy array.
+                Original FCN weights (by default for 1000 classes).
+            shape: numpy array
+                The shape of the desired layer.
+            num_new_classes: int32.
+                The number of new classes.
 
-    Args:
-        fcn_weights: numpy array.
-            Original FCN weights (by default for 1000 classes).
-        shape: numpy array
-            The shape of the desired layer.
-        num_new_classes: int32.
-            The number of new classes.
+        Returns:
+            averaged_fcn_weights: numpy array.
+                Filter weights for new classes.
+        """
+        num_origin_classes = shape[3]
 
-    Returns:
-        averaged_fcn_weights: numpy array.
-            Filter weights for new classes.
-    """
-    num_origin_classes = shape[3]
+        # [:, :, origin (] => [:, :, num_new]
+        shape[3] = num_new_classes
 
-    # [:, :, origin (] => [:, :, num_new]
-    shape[3] = num_new_classes
+        assert (num_new_classes < num_origin_classes)
+        n_averaged_elements = num_origin_classes // num_new_classes
+        averaged_fcn_weights = np.zeros(shape)
 
-    assert (num_new_classes < num_origin_classes)
-    n_averaged_elements = num_origin_classes // num_new_classes
-    averaged_fcn_weights = np.zeros(shape)
-
-    # TODO optimise this for statement.
-    for i in range(0, num_origin_classes, n_averaged_elements):
-        start_idx = i
-        end_idx = start_idx + n_averaged_elements
-        averaged_idx = start_idx // n_averaged_elements
-        if averaged_idx == num_new_classes:
-            break
-        averaged_fcn_weights[:, :, :, averaged_idx] = np.mean(
-            fcn_weights[:, :, :, start_idx:end_idx], axis=3)
-    return averaged_fcn_weights
+        # TODO optimise this for statement.
+        for i in range(0, num_origin_classes, n_averaged_elements):
+            start_idx = i
+            end_idx = start_idx + n_averaged_elements
+            averaged_idx = start_idx // n_averaged_elements
+            if averaged_idx == num_new_classes:
+                break
+            averaged_fcn_weights[:, :, :, averaged_idx] = np.mean(
+                fcn_weights[:, :, :, start_idx:end_idx], axis=3)
+        return averaged_fcn_weights
