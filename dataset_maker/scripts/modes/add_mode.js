@@ -18,6 +18,7 @@ var AddMode = (function () {
     function AddMode(parent, canvas) {
         this.parent = parent;
         this.canvas = canvas;
+        this.canvas.hoverCursor = 'default';
     }
 
     AddMode.prototype.eventObjectMoving = function (event) {

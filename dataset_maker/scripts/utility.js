@@ -17,15 +17,18 @@ var Utility = (function () {
             circle.originY = 'center';
 
             circle.point = point;
+            circle.typeof = 'circle';
             return circle;
         },
         makeLine: function (coords) {
-            return new fabric.Line(coords, {
+            var line = new fabric.Line(coords, {
                 fill: 'red',
                 stroke: 'red',
                 strokeWidth: 3,
                 selectable: false
             });
+            line.typeof = 'line';
+            return line;
         },
         makePolygon: function (coords) {
             var polygon = new fabric.Polygon(coords, {
@@ -33,6 +36,7 @@ var Utility = (function () {
             });
             polygon.type = 'none';
             polygon.setFill(this.setPolygonColor(polygon));
+            polygon.typeof = 'polygon';
 
             return polygon;
         },
