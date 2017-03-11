@@ -111,13 +111,14 @@
     function handleJsonSelect(object) {
         var file = object.files[0];
 
-        // Only process image file.
-        if (!file.type.match('application/json')) {
-            return;
-        }
+        // TODO add json file check.
+        // // Only process image file.
+        // if (!file.type.match('application/json')) {
+        //     return;
+        // }
 
         var reader = new FileReader();
-
+        
         // Closure to capture the file information.
         reader.onload = (function (file) {
             return function (event) {
