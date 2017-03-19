@@ -28,18 +28,15 @@ width = input_set.shape[2]
 num_classes = 3
 
 epochs = 2
-num_steps = 10
-batch_size = 2
+batch_size = 5
+size = input_set.shape[0]
+num_steps = epochs * size // batch_size
 
 
-# TODO model graph saving.
+# TODO make cross validation.
 # TODO prediction output at step.
-# TODO VGG19 possibility.
-# TODO TensorFlow scopes.
+# TODO model graph saving.
 # TODO code for TensorBoard.
-# TODO finish to comment fcn16_vgg.py.
-# TODO debug fcn16_vgg.py variables flow.
-
 
 def result(sess):
     tensors = [vgg_fcn.pred, vgg_fcn.pred_up]
@@ -51,38 +48,39 @@ def result(sess):
     scp.misc.imsave('fcn16_upsampled.png', up_color)
 
 
-with tf.device('/cpu:0'):
-    with tf.Session() as sess:
-        input_placeholder = tf.placeholder(tf.float32, [None, height, width, num_classes])
-        output_placeholder = tf.placeholder(tf.float32, [None, height, width, num_classes])
+config = tf.ConfigProto(allow_soft_placement=True)
+config.gpu_options.allow_growth = True
+with tf.Session(config=config) as sess:
+    input_placeholder = tf.placeholder(tf.float32, [None, height, width, num_classes])
+    output_placeholder = tf.placeholder(tf.float32, [None, height, width, num_classes])
 
-        vgg_fcn = fcn16_vgg.FCN16VGG()
-        with tf.name_scope("content_vgg"):
-            vgg_fcn.build(input_placeholder, train=True, num_classes=num_classes)
+    vgg_fcn = fcn16_vgg.FCN16VGG()
+    with tf.name_scope("content_vgg"):
+        vgg_fcn.build(input_placeholder, train=True, num_classes=num_classes)
 
-        loss = loss.loss(vgg_fcn.upscore32, output_placeholder, num_classes)
-        optimizer = tf.train.AdamOptimizer(0.0001).minimize(loss)
+    loss = loss.loss(vgg_fcn.upscore32, output_placeholder, num_classes)
+    optimizer = tf.train.AdamOptimizer(0.0001).minimize(loss)
 
-        print('Finished building Network.')
+    print('Finished building Network.')
 
-        logging.warning("Score weights are initialized random.")
-        logging.warning("Do not expect meaningful results.")
+    logging.warning("Score weights are initialized random.")
+    logging.warning("Do not expect meaningful results.")
 
-        logging.info("Start Initializing Variabels.")
+    logging.info("Start Initializing Variabels.")
 
-        sess.run(tf.global_variables_initializer())
+    sess.run(tf.global_variables_initializer())
 
-        print('Running the Network')
-        print('Training the Network')
-        for step in range(num_steps):
-            offset = (step * batch_size) % (input_set.shape[0] - batch_size)
-            batch_input = input_set[offset:(offset + batch_size), :]
-            batch_output = output_set[offset:(offset + batch_size), :]
+    print('Running the Network')
+    print('Training the Network')
+    for step in range(num_steps):
+        offset = (step * batch_size) % size
+        batch_input = input_set[offset:(offset + batch_size), :]
+        batch_output = output_set[offset:(offset + batch_size), :]
 
-            _, l = sess.run([optimizer, loss],
-                            feed_dict={input_placeholder: batch_input, output_placeholder: batch_output})
-            if step % 2 == 0:
-                print("Minibatch loss at step %d: %f" % (step, l))
-                # TODO make prediction output at step.
+        _, l = sess.run([optimizer, loss],
+                        feed_dict={input_placeholder: batch_input, output_placeholder: batch_output})
+        if step % 2 == 0:
+            print("Minibatch loss at step %d: %f" % (step, l))
+            # TODO make prediction output at step.
 
-        result(sess)
+    result(sess)
