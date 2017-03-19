@@ -47,7 +47,7 @@ def read_files(dir):
         return None
 
     # Allowed image types.
-    extensions = ['jpg', 'jpeg', 'JPG', 'JPEG']
+    extensions = ['jpg', 'jpeg']
     file_list = []
 
     print("Looking for images in '" + dir + "'")
@@ -83,6 +83,8 @@ def read_files(dir):
             OUTPUT: output_image
         }
         dataset.append(item)
+
+    print("Found " + str(len(dataset)) + " images.")
 
     return dataset
 
