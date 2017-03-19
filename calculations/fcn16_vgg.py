@@ -357,8 +357,16 @@ class FCN16VGG:
         return tf.get_variable(name="up_filter", initializer=init,
                                shape=weights.shape)
 
-    # TODO check code.
     def _get_conv_filter(self, name):
+        """Get convolutional filter.
+
+        Args:
+            name: string.
+                Name of the layer.
+        Returns:
+            filter: tensor variable.
+                Convolutional filter.
+        """
         init = tf.constant_initializer(value=self.data_dict[name][0],
                                        dtype=tf.float32)
         shape = self.data_dict[name][0].shape
@@ -374,8 +382,18 @@ class FCN16VGG:
             tf.add_to_collection('losses', weight_decay)
         return filter
 
-    # TODO check code.
     def _get_bias(self, name, num_classes=None):
+        """Get bias weights of given layer name.
+
+        Args:
+            name: string.
+                Name of the layer.
+            num_classes: int32.
+                How many classes should be predicted.
+        Returns:
+            tensor variable.
+                Bias weights of the layer.
+        """
         bias_weights = self.data_dict[name][1]
         shape = self.data_dict[name][1].shape
 
@@ -388,19 +406,26 @@ class FCN16VGG:
                                        dtype=tf.float32)
         return tf.get_variable(name="biases", initializer=init, shape=shape)
 
-    # TODO check code.
     def _get_fc_weight(self, name):
+        """Get weights of given layer name.
+
+        Args:
+            name: string.
+                Name of the layer.
+        Returns:
+            Fully-connected weights of the layer.
+        """
         init = tf.constant_initializer(value=self.data_dict[name][0],
                                        dtype=tf.float32)
         shape = self.data_dict[name][0].shape
-        var = tf.get_variable(name="weights", initializer=init, shape=shape)
+        weights = tf.get_variable(name="weights", initializer=init, shape=shape)
 
         if not tf.get_variable_scope().reuse:
-            weight_decay = tf.multiply(tf.nn.l2_loss(var), self.wd,
+            weight_decay = tf.multiply(tf.nn.l2_loss(weights), self.wd,
                                        name='weight_loss')
             tf.add_to_collection('losses', weight_decay)
 
-        return var
+        return weights
 
     @staticmethod
     def _bias_reshape(bias_weights, num_origin_classes, num_new_classes):
@@ -526,7 +551,7 @@ class FCN16VGG:
         n_averaged_elements = num_origin_classes // num_new_classes
         averaged_fcn_weights = np.zeros(shape)
 
-        # TODO optimise this for statement.
+        # TODO optimise this 'for' statement.
         for i in range(0, num_origin_classes, n_averaged_elements):
             start_idx = i
             end_idx = start_idx + n_averaged_elements
