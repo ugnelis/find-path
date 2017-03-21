@@ -36,7 +36,7 @@ num_steps = epochs * size // batch_size
 # TODO make cross validation.
 # TODO prediction output at step.
 # TODO model graph saving.
-# TODO code for TensorBoard.
+
 
 def result(sess):
     tensors = [vgg_fcn.pred, vgg_fcn.pred_up]
@@ -48,39 +48,54 @@ def result(sess):
     scp.misc.imsave('fcn16_upsampled.png', up_color)
 
 
-config = tf.ConfigProto(allow_soft_placement=True)
-config.gpu_options.allow_growth = True
-with tf.Session(config=config) as sess:
-    input_placeholder = tf.placeholder(tf.float32, [None, height, width, num_classes])
-    output_placeholder = tf.placeholder(tf.float32, [None, height, width, num_classes])
+# With CPU mini-batch size can be bigger.
+with tf.device('/cpu:0'):
+    config = tf.ConfigProto(allow_soft_placement=True)
+    config.gpu_options.allow_growth = True
+    with tf.Session(config=config) as sess:
+        input_placeholder = tf.placeholder(tf.float32, [None, height, width, num_classes])
+        output_placeholder = tf.placeholder(tf.float32, [None, height, width, num_classes])
 
-    vgg_fcn = fcn16_vgg.FCN16VGG()
-    with tf.name_scope("content_vgg"):
-        vgg_fcn.build(input_placeholder, train=True, num_classes=num_classes)
+        vgg_fcn = fcn16_vgg.FCN16VGG()
+        with tf.name_scope("content_vgg"):
+            vgg_fcn.build(input_placeholder, train=True, num_classes=num_classes)
 
-    loss = loss.loss(vgg_fcn.upscore32, output_placeholder, num_classes)
-    optimizer = tf.train.AdamOptimizer(0.0001).minimize(loss)
+        with tf.name_scope("loss"):
+            loss = loss.loss(vgg_fcn.upscore32, output_placeholder, num_classes)
+            optimizer = tf.train.AdamOptimizer(0.0001).minimize(loss)
+            tf.summary.scalar("loss", loss)
 
-    print('Finished building Network.')
+        print('Finished building Network.')
 
-    logging.warning("Score weights are initialized random.")
-    logging.warning("Do not expect meaningful results.")
+        logging.warning("Score weights are initialized random.")
+        logging.warning("Do not expect meaningful results.")
 
-    logging.info("Start Initializing Variabels.")
+        logging.info("Start Initializing Variables.")
 
-    sess.run(tf.global_variables_initializer())
+        # Merge all the summaries and write them out.
+        merged_summary_op = tf.summary.merge_all()
 
-    print('Running the Network')
-    print('Training the Network')
-    for step in range(num_steps):
-        offset = (step * batch_size) % size
-        batch_input = input_set[offset:(offset + batch_size), :]
-        batch_output = output_set[offset:(offset + batch_size), :]
+        # Initializing summary writer for TensorBoard.
+        summary_writer = tf.summary.FileWriter('./log_dir/work', tf.get_default_graph())
 
-        _, l = sess.run([optimizer, loss],
-                        feed_dict={input_placeholder: batch_input, output_placeholder: batch_output})
-        if step % 2 == 0:
-            print("Minibatch loss at step %d: %f" % (step, l))
-            # TODO make prediction output at step.
+        #  Initializing the variables.
+        sess.run(tf.global_variables_initializer())
 
-    result(sess)
+        print('Running the Network')
+        print('Training the Network')
+        for step in range(num_steps):
+            offset = (step * batch_size) % size
+            batch_input = input_set[offset:(offset + batch_size), :]
+            batch_output = output_set[offset:(offset + batch_size), :]
+
+            _, l, summary = sess.run([optimizer, loss, merged_summary_op],
+                                     feed_dict={input_placeholder: batch_input, output_placeholder: batch_output})
+
+            # Write logs at every iteration
+            summary_writer.add_summary(summary, epochs * offset + step)
+
+            if (step + 1) % 2 == 0:
+                print("Minibatch loss at step %d: %f" % (step, l))
+                # TODO make prediction output at step.
+
+        result(sess)
