@@ -33,11 +33,6 @@ size = input_set.shape[0]
 num_steps = epochs * size // batch_size
 
 
-# TODO make cross validation.
-# TODO prediction output at step.
-# TODO model graph saving.
-
-
 def result(sess):
     tensors = [vgg_fcn.pred, vgg_fcn.pred_up]
     down, up = sess.run(tensors, feed_dict={input_placeholder: [test_image]})
@@ -96,6 +91,5 @@ with tf.device('/cpu:0'):
 
             if (step + 1) % 2 == 0:
                 print("Minibatch loss at step %d: %f" % (step, l))
-                # TODO make prediction output at step.
 
         result(sess)
