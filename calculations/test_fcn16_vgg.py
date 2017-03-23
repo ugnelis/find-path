@@ -21,7 +21,8 @@ logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
 dataset = utils.read_files(RESOURCE)
 input_set, output_set = utils.split_dataset(dataset)
 
-test_image = input_set[-1]
+test_input = input_set[-1]
+test_ouput = output_set[-1]
 
 height = input_set.shape[1]
 width = input_set.shape[2]
@@ -35,12 +36,40 @@ num_steps = epochs * size // batch_size
 
 def result(sess):
     tensors = [vgg_fcn.pred, vgg_fcn.pred_up]
-    down, up = sess.run(tensors, feed_dict={input_placeholder: [test_image]})
+    down, up = sess.run(tensors, feed_dict={input_placeholder: [test_input]})
     down_color = utils.color_image(down[0], num_classes)
+
+    print(accuracy(up[0], utils.one_hot_encoding_to_regions(test_ouput)))
+
     up_color = utils.color_image(up[0], num_classes)
 
     scp.misc.imsave('fcn16_downsampled.png', down_color)
     scp.misc.imsave('fcn16_upsampled.png', up_color)
+
+
+def accuracy(prediction, real):
+    """
+
+    Args:
+        prediction: numpy array, int32 - [height, width].
+            Array of the prediction.
+        real: numpy array, int32 - [height, width].
+            Array of the real.
+
+    Returns:
+        accuracy: float32.
+            Accuracy of the images
+    """
+    num_equals = 0
+    height, width = prediction.shape[:2]
+
+    for i in range(height):
+        for j in range(width):
+            if prediction[i, j] == real[i, j]:
+                num_equals += 1
+
+    accuracy = 100.0 * num_equals / (height * width)
+    return accuracy
 
 
 # With CPU mini-batch size can be bigger.
