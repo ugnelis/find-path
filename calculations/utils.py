@@ -18,6 +18,31 @@ OUTPUT = 'output'
 CLASSES = ['boundary', 'route', 'obstacle']
 
 
+def split_dataset(input_set, output_set, test_size):
+    """Split arrays or matrices into train and test subsets.
+
+    Args:
+        input_set: numpy array.
+        output_set: numpy array.
+        test_size: float32.
+            Size of test set.
+
+    Returns:
+        train_input_set: numpy array.
+        train_output_set: numpy array.
+        test_input_set: numpy array.
+        test_output_setnumpy array.
+    """
+    size = input_set.shape[0]
+    test_size = int(size * test_size)
+    train_input_set = input_set[:size - test_size]
+    train_output_set = output_set[:size - test_size]
+    test_input_set = input_set[size - test_size:size]
+    test_output_set = output_set[size - test_size:size]
+
+    return train_input_set, train_output_set, test_input_set, test_output_set
+
+
 def activation_summary(x):
     """Helper to create summaries for activations.
 
