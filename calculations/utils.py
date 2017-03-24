@@ -18,7 +18,7 @@ OUTPUT = 'output'
 CLASSES = ['boundary', 'route', 'obstacle']
 
 
-def split_dataset(input_set, output_set, test_size):
+def train_test_split(input_set, output_set, test_size):
     """Split arrays or matrices into train and test subsets.
 
     Args:
