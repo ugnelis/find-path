@@ -18,6 +18,31 @@ OUTPUT = 'output'
 CLASSES = ['boundary', 'route', 'obstacle']
 
 
+def train_test_split(input_set, output_set, test_size):
+    """Split arrays or matrices into train and test subsets.
+
+    Args:
+        input_set: numpy array.
+        output_set: numpy array.
+        test_size: float32.
+            Size of test set.
+
+    Returns:
+        train_input_set: numpy array.
+        train_output_set: numpy array.
+        test_input_set: numpy array.
+        test_output_setnumpy array.
+    """
+    size = input_set.shape[0]
+    test_size = int(size * test_size)
+    train_input_set = input_set[:size - test_size]
+    train_output_set = output_set[:size - test_size]
+    test_input_set = input_set[size - test_size:size]
+    test_output_set = output_set[size - test_size:size]
+
+    return train_input_set, train_output_set, test_input_set, test_output_set
+
+
 def activation_summary(x):
     """Helper to create summaries for activations.
 
@@ -182,6 +207,29 @@ def regions_to_one_hot_encoding(array, num_classes):
             one_hot[i, j, class_index] = 1
 
     return one_hot
+
+
+def one_hot_encoding_to_regions(one_hot):
+    """Make One Hot to be decoded as regions.
+
+    Args:
+        one_hot: numpy array, int32 - [height, width, num_classes].
+            Array of the regions.
+
+    Returns:
+        regions: numpy array, int32 - [height, width].
+    """
+    height, width, num_classes = one_hot.shape
+
+    regions = np.zeros([height, width])
+
+    for i in range(height):
+        for j in range(width):
+            for k in range(num_classes):
+                if one_hot[i, j, k] != 0:
+                    regions[i, j] = int(one_hot[i, j, k])
+
+    return regions
 
 
 def save_polygons_to_regions_image(image_path, polygons):
