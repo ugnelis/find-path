@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import logging
 import sys
+import random
 
 import numpy as np
 import scipy as scp
@@ -19,10 +24,14 @@ logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
                     stream=sys.stdout)
 
 dataset = utils.read_files(RESOURCE)
+random.shuffle(dataset)
 input_set, output_set = utils.split_dataset(dataset)
 
-test_input = input_set[-1]
-test_ouput = output_set[-1]
+train_input_set, train_output_set, test_input_set, test_output_set \
+    = utils.train_test_split(input_set, output_set, 0.1)
+
+train_input_set, train_output_set, valid_input_set, valid_output_set \
+    = utils.train_test_split(train_input_set, train_output_set, 0.1)
 
 height = input_set.shape[1]
 width = input_set.shape[2]
@@ -34,42 +43,53 @@ size = input_set.shape[0]
 num_steps = epochs * size // batch_size
 
 
-def result(sess):
-    tensors = [vgg_fcn.pred, vgg_fcn.pred_up]
-    down, up = sess.run(tensors, feed_dict={input_placeholder: [test_input]})
-    down_color = utils.color_image(down[0], num_classes)
-
-    print(accuracy(up[0], utils.one_hot_encoding_to_regions(test_ouput)))
-
-    up_color = utils.color_image(up[0], num_classes)
-
-    scp.misc.imsave('fcn16_downsampled.png', down_color)
-    scp.misc.imsave('fcn16_upsampled.png', up_color)
-
-
-def accuracy(prediction, real):
-    """
+def compare(predicted_data, real_data):
+    """Compare predicted image with real image.
 
     Args:
-        prediction: numpy array, int32 - [height, width].
+        predicted_data: numpy array, int32 - [height, width].
             Array of the prediction.
-        real: numpy array, int32 - [height, width].
+        real_data: numpy array, int32 - [height, width].
             Array of the real.
 
     Returns:
-        accuracy: float32.
-            Accuracy of the images
+        result: float32.
+            Similarity of the images.
     """
     num_equals = 0
-    height, width = prediction.shape[:2]
+    height, width = predicted_data.shape[:2]
 
     for i in range(height):
         for j in range(width):
-            if prediction[i, j] == real[i, j]:
+            if predicted_data[i, j] == real_data[i, j]:
                 num_equals += 1
 
-    accuracy = 100.0 * num_equals / (height * width)
-    return accuracy
+    result = 100.0 * num_equals / (height * width)
+    return result
+
+
+def accuracy(predicted_batch_set, real_batch_set):
+    """Get accuracy of predicted data.
+
+    Args:
+        predicted_batch_set: numpy array, int32 - [batch_size, width, height].
+            The predicted data.
+        real_batch_set: numpy array, int32 - [batch_size, width, height].
+            The ground truth of the data.
+
+    Returns:
+        Accuracy of predicted data.
+    """
+    predicted_batch_size = predicted_batch_set.shape[0]
+    real_batch_size = real_batch_set.shape[0]
+
+    assert (predicted_batch_size == real_batch_size)
+
+    sum = 0.0
+    for i in range(predicted_batch_size):
+        sum += compare(predicted_batch_set[i], real_batch_set[i])
+
+    return sum / predicted_batch_size
 
 
 # With CPU mini-batch size can be bigger.
@@ -112,13 +132,19 @@ with tf.device('/cpu:0'):
             batch_input = input_set[offset:(offset + batch_size), :]
             batch_output = output_set[offset:(offset + batch_size), :]
 
-            _, l, summary = sess.run([optimizer, loss, merged_summary_op],
-                                     feed_dict={input_placeholder: batch_input, output_placeholder: batch_output})
+            _, l, predictions, summary = sess.run([optimizer, loss, vgg_fcn.pred_up, merged_summary_op],
+                                                  feed_dict={input_placeholder: batch_input,
+                                                             output_placeholder: batch_output})
 
             # Write logs at every iteration
             summary_writer.add_summary(summary, epochs * offset + step)
 
-            if (step + 1) % 2 == 0:
-                print("Minibatch loss at step %d: %f" % (step, l))
+            if (step + 1) % 10 == 0:
+                print("Minibatch loss at step %d: %f" % (step + 1, l))
+                print("Minibatch accuracy: %.1f%%" % accuracy(predictions, batch_output.argmax(axis=3)))
 
-        result(sess)
+                valid_prediction = sess.run(vgg_fcn.pred_up, feed_dict={input_placeholder: valid_input_set})
+                print("Validation accuracy: %.1f%%" % accuracy(valid_prediction, valid_output_set.argmax(axis=3)))
+
+        test_prediction = sess.run(vgg_fcn.pred_up, feed_dict={input_placeholder: test_input_set})
+        print("Test accuracy: %.1f%%" % accuracy(test_prediction, test_output_set.argmax(axis=3)))
