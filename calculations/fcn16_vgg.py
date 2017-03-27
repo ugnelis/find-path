@@ -20,9 +20,7 @@ class FCN16VGG:
     def __init__(self, vgg16_npy_path=None):
         if vgg16_npy_path is None:
             path = sys.modules[self.__class__.__module__].__file__
-            # print path
             path = os.path.abspath(os.path.join(path, os.pardir))
-            # print path
             path = os.path.join(path, "vgg16.npy")
             vgg16_npy_path = path
             logging.info("Load npy file from '%s'.", vgg16_npy_path)
@@ -31,7 +29,8 @@ class FCN16VGG:
             sys.exit(1)
 
         self.data_dict = np.load(vgg16_npy_path, encoding='latin1').item()
-        self.wd = 5e-4
+
+        self.weight_decay = 5e-4
         print("npy file loaded")
 
     def build(self, rgb, train=False, num_classes=3, random_init_fc8=False,
@@ -40,7 +39,7 @@ class FCN16VGG:
 
         Args:
             rgb: image batch tensor.
-                Image in rgb shape. Scaled to Intervall [0, 255]
+                Image in rgb shape. Scaled to Interval [0, 255]
             train: bool.
                 Whether to build train or inference graph.
             num_classes: int32.
@@ -253,8 +252,8 @@ class FCN16VGG:
                 stddev = 0.001
 
             # Apply convolution.
-            w_decay = self.wd
-            weights = self._variable_with_weight_decay(shape, stddev, w_decay)
+            weight_decay = self.weight_decay
+            weights = self._variable_with_weight_decay(shape, stddev, weight_decay)
             conv = tf.nn.conv2d(input, weights, [1, 1, 1, 1], padding='SAME')
 
             # Apply bias.
@@ -287,7 +286,7 @@ class FCN16VGG:
             debug: bool.
                 Whether to print additional debug information.
             ksize: int32.
-            stride: int32.
+            stride: inhttps://www.w3schools.com/css/css_float.aspt32.
         Returns:
             deconv: tensor, float32.
                 Upsampled layer.
@@ -377,9 +376,10 @@ class FCN16VGG:
         filter = tf.get_variable(name="filter", initializer=init, shape=shape)
 
         if not tf.get_variable_scope().reuse:
-            weight_decay = tf.multiply(tf.nn.l2_loss(filter), self.wd,
+            weight_decay = tf.multiply(tf.nn.l2_loss(filter), self.weight_decay,
                                        name='weight_loss')
             tf.add_to_collection('losses', weight_decay)
+
         return filter
 
     def _get_bias(self, name, num_classes=None):
@@ -391,7 +391,7 @@ class FCN16VGG:
             num_classes: int32.
                 How many classes should be predicted.
         Returns:
-            tensor variable.
+            biases: tensor variable.
                 Bias weights of the layer.
         """
         bias_weights = self.data_dict[name][1]
@@ -402,9 +402,12 @@ class FCN16VGG:
                                               shape[0],
                                               num_classes)
             shape = [num_classes]
+
         init = tf.constant_initializer(value=bias_weights,
                                        dtype=tf.float32)
-        return tf.get_variable(name="biases", initializer=init, shape=shape)
+        biases = tf.get_variable(name="biases", initializer=init, shape=shape)
+
+        return biases
 
     def _get_fc_weight(self, name):
         """Get weights of given layer name.
@@ -421,7 +424,7 @@ class FCN16VGG:
         weights = tf.get_variable(name="weights", initializer=init, shape=shape)
 
         if not tf.get_variable_scope().reuse:
-            weight_decay = tf.multiply(tf.nn.l2_loss(weights), self.wd,
+            weight_decay = tf.multiply(tf.nn.l2_loss(weights), self.weight_decay,
                                        name='weight_loss')
             tf.add_to_collection('losses', weight_decay)
 
@@ -504,7 +507,7 @@ class FCN16VGG:
                 How many classes should be predicted.
 
         Returns:
-            variable tensor.
+            weights: variable tensor.
         """
         print('Layer name: %s' % name)
         print('Layer shape: %s' % shape)
@@ -516,8 +519,9 @@ class FCN16VGG:
 
         init = tf.constant_initializer(value=weights,
                                        dtype=tf.float32)
+        weights = tf.get_variable(name="weights", initializer=init, shape=shape)
 
-        return tf.get_variable(name="weights", initializer=init, shape=shape)
+        return weights
 
     def _summary_reshape(self, fcn_weights, shape, num_new_classes):
         """Produce weights for a reduced fully-connected layer.
