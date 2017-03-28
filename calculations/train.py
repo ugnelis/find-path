@@ -18,6 +18,7 @@ import loss
 import utils
 
 RESOURCE = '../dataset'
+MODEL_PATH = "./model-new.ckpt"
 
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
                     level=logging.INFO,
@@ -38,7 +39,7 @@ width = input_set.shape[2]
 num_classes = 3
 
 epochs = 2
-batch_size = 5
+batch_size = 2
 size = input_set.shape[0]
 num_steps = epochs * size // batch_size
 
@@ -92,29 +93,33 @@ def accuracy(predicted_batch_set, real_batch_set):
     return sum / predicted_batch_size
 
 
+input_placeholder = tf.placeholder(tf.float32, [None, height, width, num_classes])
+output_placeholder = tf.placeholder(tf.float32, [None, height, width, num_classes])
+
+vgg_fcn = fcn16_vgg.FCN16VGG('./vgg16.npy')
+
+with tf.name_scope("content_vgg"):
+    vgg_fcn.build(input_placeholder, train=True, num_classes=num_classes)
+
+with tf.name_scope("loss"):
+    loss = loss.loss(vgg_fcn.upscore32, output_placeholder, num_classes)
+    optimizer = tf.train.AdamOptimizer(0.0001).minimize(loss)
+    tf.summary.scalar("loss", loss)
+
+print('Finished building Network.')
+
+# Initializing the variables.
+init = tf.global_variables_initializer()
+
+# Saver op to save and restore all the variables.
+saver = tf.train.Saver()
+
 # With CPU mini-batch size can be bigger.
 with tf.device('/cpu:0'):
     config = tf.ConfigProto(allow_soft_placement=True)
     config.gpu_options.allow_growth = True
+
     with tf.Session(config=config) as sess:
-        input_placeholder = tf.placeholder(tf.float32, [None, height, width, num_classes])
-        output_placeholder = tf.placeholder(tf.float32, [None, height, width, num_classes])
-
-        vgg_fcn = fcn16_vgg.FCN16VGG()
-        with tf.name_scope("content_vgg"):
-            vgg_fcn.build(input_placeholder, train=True, num_classes=num_classes)
-
-        with tf.name_scope("loss"):
-            loss = loss.loss(vgg_fcn.upscore32, output_placeholder, num_classes)
-            optimizer = tf.train.AdamOptimizer(0.0001).minimize(loss)
-            tf.summary.scalar("loss", loss)
-
-        print('Finished building Network.')
-
-        logging.warning("Score weights are initialized random.")
-        logging.warning("Do not expect meaningful results.")
-
-        logging.info("Start Initializing Variables.")
 
         # Merge all the summaries and write them out.
         merged_summary_op = tf.summary.merge_all()
@@ -122,8 +127,8 @@ with tf.device('/cpu:0'):
         # Initializing summary writer for TensorBoard.
         summary_writer = tf.summary.FileWriter('./log_dir/work', tf.get_default_graph())
 
-        #  Initializing the variables.
-        sess.run(tf.global_variables_initializer())
+        # Run initialized variables.
+        sess.run(init)
 
         print('Running the Network')
         print('Training the Network')
@@ -136,9 +141,10 @@ with tf.device('/cpu:0'):
                                                   feed_dict={input_placeholder: batch_input,
                                                              output_placeholder: batch_output})
 
-            # Write logs at every iteration
+            # Write logs at every iteration.
             summary_writer.add_summary(summary, epochs * offset + step)
 
+            # Output intermediate step information.
             if (step + 1) % 10 == 0:
                 print("Minibatch loss at step %d: %f" % (step + 1, l))
                 print("Minibatch accuracy: %.1f%%" % accuracy(predictions, batch_output.argmax(axis=3)))
@@ -146,5 +152,10 @@ with tf.device('/cpu:0'):
                 valid_prediction = sess.run(vgg_fcn.pred_up, feed_dict={input_placeholder: valid_input_set})
                 print("Validation accuracy: %.1f%%" % accuracy(valid_prediction, valid_output_set.argmax(axis=3)))
 
+        # Get accuracy of the test set.
         test_prediction = sess.run(vgg_fcn.pred_up, feed_dict={input_placeholder: test_input_set})
         print("Test accuracy: %.1f%%" % accuracy(test_prediction, test_output_set.argmax(axis=3)))
+
+        # Save model weights to disk.
+        save_path = saver.save(sess, MODEL_PATH)
+        print("Model saved in file: %s" % save_path)
