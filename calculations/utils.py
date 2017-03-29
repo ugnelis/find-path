@@ -2,15 +2,9 @@ import numpy as np
 import os.path
 import glob
 import json
-import cv2
-import scipy as scp
 import scipy.misc
 from PIL import Image, ImageDraw
 import tensorflow as tf
-
-ROUTE_COLOR = (0, 0, 0)
-OBSTACLE_COLOR = (128, 0, 128)
-BOUNDARY_COLOR = (255, 255, 255)
 
 INPUT = 'input'
 OUTPUT = 'output'
@@ -31,7 +25,7 @@ def train_test_split(input_set, output_set, test_size):
         train_input_set: numpy array.
         train_output_set: numpy array.
         test_input_set: numpy array.
-        test_output_setnumpy array.
+        test_output_set: numpy array.
     """
     size = input_set.shape[0]
     test_size = int(size * test_size)
@@ -87,12 +81,12 @@ def read_files(dir):
         file_name = os.path.splitext(os.path.basename(file))[0]
         json_path = dir + '/' + file_name + '.json'
 
-        # Check if image JSON file exists
+        # Check if image JSON file exists.
         if not os.path.exists(json_path):
             print("JSON file '" + json_path + "' not found.")
             continue
 
-        # Read JSON data
+        # Read JSON data.
         with open(json_path) as data_file:
             data = json.load(data_file)
 
@@ -232,36 +226,6 @@ def one_hot_encoding_to_regions(one_hot):
     return regions
 
 
-def save_polygons_to_regions_image(image_path, polygons):
-    """Save polygons as an image with regions.
-
-    Args:
-        image_path: string.
-        polygons: array of dictionaries - [[{'points': [], 'type': <string>}]].
-    """
-    image = cv2.imread(image_path)
-
-    # Make whole image as a boundary
-    image[:] = tuple(reversed(BOUNDARY_COLOR))
-
-    for polygon in polygons:
-        points_list = points_to_list(polygon['points'])
-
-        # points_list needs to be Numpy array
-        points_list = np.array(points_list, np.int32)
-
-        if polygon['type'] == "route":
-            cv2.fillPoly(image, [points_list], ROUTE_COLOR)
-
-        if polygon['type'] == "obstacle":
-            cv2.fillPoly(image, [points_list], OBSTACLE_COLOR)
-
-    # Save image
-    file_name = os.path.splitext(image_path)
-    image_regions_path = file_name[0] + "_" + file_name[1]
-    cv2.imwrite(image_regions_path, image)
-
-
 def points_to_list(points):
     """Make array of dictionaries as a list.
 
@@ -297,9 +261,38 @@ def split_dataset(dataset):
     return np.array(input), np.array(output)
 
 
-def color_image(image, num_classes=20):
-    import matplotlib as mpl
-    import matplotlib.cm
-    norm = mpl.colors.Normalize(vmin=0., vmax=num_classes)
-    mycm = mpl.cm.get_cmap('Set1')
-    return mycm(norm(image))
+def regions_to_colored_image(input, colors):
+    """Make colored image based on region class.
+
+    Args:
+        input: numpy array, int32 - [height, width].
+        colors: dictionary of colors - [num_classes].
+
+    Returns:
+        new_image: numpy array, int32 - [height, width, 3].
+            Colored image.
+    """
+    height, width = input.shape[:2]
+
+    new_image = np.zeros((height, width, 3))
+    print(new_image.shape)
+    for i in range(len(colors)):
+        new_image[input == i] = colors[i]
+
+    return new_image
+
+
+def merge_images(first_image, second_image, percentage):
+    """Merge images.
+
+    Args:
+        first_image: numpy array, int32 - [height, width].
+        second_image: numpy array, int32 - [height, width].
+        percentage: float32.
+            Percentage weight of first image.
+
+    Returns:
+        merged_image: new_image: numpy array, int32 - [height, width, 3].
+    """
+    merged_image = first_image * percentage + second_image * (1 - percentage)
+    return merged_image
