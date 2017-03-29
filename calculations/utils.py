@@ -275,7 +275,6 @@ def regions_to_colored_image(input, colors):
     height, width = input.shape[:2]
 
     new_image = np.zeros((height, width, 3))
-    print(new_image.shape)
     for i in range(len(colors)):
         new_image[input == i] = colors[i]
 
