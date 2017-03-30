@@ -18,7 +18,10 @@ import fcn16_vgg
 import utils
 
 RESOURCE = '../dataset'
-MODEL_PATH = "./model-new.ckpt"
+MODEL_PATH = "./models/model-250-5-10.ckpt"
+
+# Boundary, route, obstacle.
+colors = [[243, 193, 120], [0, 168, 120], [254, 94, 65]]
 
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
                     level=logging.INFO,
@@ -61,7 +64,12 @@ with tf.device('/cpu:0'):
 
         prediction = sess.run(vgg_fcn.pred_up, feed_dict={input_placeholder: [input_set[0]]})
 
+        # Original image mixed with predicted image.
+        regions_image = utils.regions_to_colored_image(prediction[0], colors)
+        merged_image = utils.merge_images(input_set[0], regions_image, 0.65)
+
         current_time = datetime.datetime.now()
         scp.misc.imsave(str(current_time) + ' prediction.png', prediction[0])
         scp.misc.imsave(str(current_time) + ' input.png', input_set[0])
         scp.misc.imsave(str(current_time) + ' output.png', output_set[0])
+        scp.misc.imsave(str(current_time) + ' merged.png', merged_image)
