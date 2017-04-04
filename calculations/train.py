@@ -18,7 +18,7 @@ import loss
 import utils
 
 RESOURCE = '../dataset'
-MODEL_PATH = "./model-new.ckpt"
+MODEL_PATH = "./models/model.ckpt"
 
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
                     level=logging.INFO,
@@ -40,7 +40,7 @@ num_classes = 3
 
 epochs = 2
 batch_size = 2
-size = input_set.shape[0]
+size = train_input_set.shape[0]
 num_steps = epochs * size // batch_size
 
 
@@ -93,33 +93,32 @@ def accuracy(predicted_batch_set, real_batch_set):
     return sum / predicted_batch_size
 
 
-input_placeholder = tf.placeholder(tf.float32, [None, height, width, num_classes])
-output_placeholder = tf.placeholder(tf.float32, [None, height, width, num_classes])
-
-vgg_fcn = fcn16_vgg.FCN16VGG('./vgg16.npy')
-
-with tf.name_scope("content_vgg"):
-    vgg_fcn.build(input_placeholder, train=True, num_classes=num_classes)
-
-with tf.name_scope("loss"):
-    loss = loss.loss(vgg_fcn.upscore32, output_placeholder, num_classes)
-    optimizer = tf.train.AdamOptimizer(0.0001).minimize(loss)
-    tf.summary.scalar("loss", loss)
-
-print('Finished building Network.')
-
-# Initializing the variables.
-init = tf.global_variables_initializer()
-
-# Saver op to save and restore all the variables.
-saver = tf.train.Saver()
-
 # With CPU mini-batch size can be bigger.
 with tf.device('/cpu:0'):
     config = tf.ConfigProto(allow_soft_placement=True)
     config.gpu_options.allow_growth = True
 
     with tf.Session(config=config) as sess:
+        input_placeholder = tf.placeholder(tf.float32, [None, height, width, num_classes])
+        output_placeholder = tf.placeholder(tf.float32, [None, height, width, num_classes])
+
+        vgg_fcn = fcn16_vgg.FCN16VGG('./vgg16.npy')
+
+        with tf.name_scope("content_vgg"):
+            vgg_fcn.build(input_placeholder, train=True, num_classes=num_classes)
+
+        with tf.name_scope("loss"):
+            loss = loss.loss(vgg_fcn.upscore32, output_placeholder, num_classes)
+            optimizer = tf.train.AdamOptimizer(0.0001).minimize(loss)
+            tf.summary.scalar("loss", loss)
+
+        print('Finished building Network.')
+
+        # Initializing the variables.
+        init = tf.global_variables_initializer()
+
+        # Saver op to save and restore all the variables.
+        saver = tf.train.Saver()
 
         # Merge all the summaries and write them out.
         merged_summary_op = tf.summary.merge_all()
@@ -134,8 +133,8 @@ with tf.device('/cpu:0'):
         print('Training the Network')
         for step in range(num_steps):
             offset = (step * batch_size) % size
-            batch_input = input_set[offset:(offset + batch_size), :]
-            batch_output = output_set[offset:(offset + batch_size), :]
+            batch_input = train_input_set[offset:(offset + batch_size), :]
+            batch_output = train_output_set[offset:(offset + batch_size), :]
 
             _, l, predictions, summary = sess.run([optimizer, loss, vgg_fcn.pred_up, merged_summary_op],
                                                   feed_dict={input_placeholder: batch_input,
