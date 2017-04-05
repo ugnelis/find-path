@@ -28,6 +28,11 @@ dataset = utils.read_files(RESOURCE)
 random.shuffle(dataset)
 input_set, output_set = utils.split_dataset(dataset)
 
+np.save("input_set.npy", input_set)
+np.save("output_set.npy", output_set)
+# input_set = np.load("input_set.npy")
+# output_set = np.load("output_set.npy")
+
 train_input_set, train_output_set, test_input_set, test_output_set \
     = utils.train_test_split(input_set, output_set, 0.1)
 
