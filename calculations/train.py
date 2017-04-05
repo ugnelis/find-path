@@ -38,8 +38,8 @@ height = input_set.shape[1]
 width = input_set.shape[2]
 num_classes = 3
 
-epochs = 2
-batch_size = 2
+epochs = 10
+batch_size = 5
 size = train_input_set.shape[0]
 num_steps = epochs * size // batch_size
 
@@ -144,7 +144,7 @@ with tf.device('/cpu:0'):
             summary_writer.add_summary(summary, epochs * offset + step)
 
             # Output intermediate step information.
-            if (step + 1) % 10 == 0:
+            if (step + 1) % 25 == 0:
                 print("Minibatch loss at step %d: %f" % (step + 1, l))
                 print("Minibatch accuracy: %.1f%%" % accuracy(predictions, batch_output.argmax(axis=3)))
 
