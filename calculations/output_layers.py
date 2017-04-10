@@ -24,11 +24,11 @@ logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
                     level=logging.INFO,
                     stream=sys.stdout)
 
-input_set = np.load("input_set.npy")
-output_set = np.load("output_set.npy")
+input_set = np.load('input_set.npy')
+output_set = np.load('output_set.npy')
 
-input_set = input_set[:5]
-output_set = output_set[:5]
+input_set = input_set[:1]
+output_set = output_set[:1]
 
 train_input_set, train_output_set, test_input_set, test_output_set \
     = utils.train_test_split(input_set, output_set, 0.1)
@@ -44,9 +44,10 @@ epochs = 3
 batch_size = 1
 size = input_set.shape[0]
 num_steps = epochs * size // batch_size
+output_at_step = 25
 
 
-def save(filters, scale_times=1, name='alayer', directory='out'):
+def save(filters, scale_times=1, name='layer', directory='out'):
     """Save particular layer filters into images.
 
     Args:
@@ -91,10 +92,10 @@ with tf.device('/cpu:0'):
 
         vgg_fcn = fcn16_vgg.FCN16VGG('./vgg16.npy')
 
-        with tf.name_scope("content_vgg"):
+        with tf.name_scope('content_vgg'):
             vgg_fcn.build(input_placeholder, train=True, num_classes=num_classes, debug=True)
 
-        with tf.name_scope("loss"):
+        with tf.name_scope('loss'):
             loss = loss.loss(vgg_fcn.upscore32, output_placeholder, num_classes)
             optimizer = tf.train.AdamOptimizer(0.0001).minimize(loss)
 
@@ -118,5 +119,6 @@ with tf.device('/cpu:0'):
                                                 output_placeholder: batch_output})
 
             # Output intermediate step information.
-            if (step + 1) % 1 == 0:
-                save(conv1_1)
+            if (step + 1) % output_at_step == 0:
+                save(conv1_1, name='conv1_1'+str(step))
+                break
