@@ -33,7 +33,7 @@ $ install bower
 Open *index.html* and have fun.
 
 ## Dataset
-All dataset images have 320 width, 180 height and contain 3 channels. Every image has own *.json* file which describes object in the image. In this project only 3 classes are observed: **boundaries** (everything arround path), **paths / ways** and **obstacles** (things that are on path - eg. human, road pit and etc.). Dataset contains 300 images (I'll a bit later).
+All dataset images have 320 width, 180 height and contain 3 channels. Every image has own *.json* file which describes object in the image. In this project only 3 classes are observed: **boundaries** (everything arround path), **paths / ways** and **obstacles** (things that are on path - eg. human, road pit and etc.). Dataset contains 300 images (I'll put a bit later).
 
 ## Path Finding with OpenCV
 Check *calculations/cv/* folder.
