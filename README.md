@@ -26,7 +26,7 @@ For making dataset, web based application was made which uses just JavaScript wi
 Before installation, make sure that NodeJS, npm and bower are installed.
 ```bash
 $ cd dataset_maker
-$ install bower
+$ bower install
 ```
 
 ### Launching
